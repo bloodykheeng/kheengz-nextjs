@@ -27,7 +27,7 @@ before any page renders. So:
 | --- | --- |
 | Who may open which page | [proxy.ts](../proxy.ts), from the cookies, before render. Only `/dashboard/...` needs a session; every other path is the storefront, open to all (`isDashboardRoute`, [lib/routeAccess.ts](../lib/routeAccess.ts)) |
 | The session (token, profile, permissions) | [contexts/AuthContext.tsx](../contexts/AuthContext.tsx), in the browser. `isProfileLoading` stays true until the browser has hydrated, so the server and the first browser render agree |
-| The theme | [contexts/ThemeContext.tsx](../contexts/ThemeContext.tsx), the cookie read through `useSyncExternalStore` (light on the server). `THEME_BOOT_SCRIPT`, inline in the dashboard and sign-in layouts, puts the dark class on before the first paint, so there is no light flash |
+| The theme | [contexts/ThemeContext.tsx](../contexts/ThemeContext.tsx), the cookie read through `useSyncExternalStore` (light on the server). [lib/themeBoot.ts](../lib/themeBoot.ts), an inline script in the **root layout's** `<head>`, puts the dark class on before the first paint on dashboard and sign-in pages only, so there is no light flash |
 | The providers | [components/auth/SessionProviders.tsx](../components/auth/SessionProviders.tsx), a client component mounted by the dashboard and sign-in layouts only |
 | The shell | [DashboardLayout.tsx](../components/dashboard/layout/DashboardLayout.tsx) always renders the sidebar, header and page, hidden and `inert` under [AuthLoadingScreen](../components/auth/AuthLoadingScreen.tsx) until the profile lands. The page is therefore in the prerendered shell, and starts fetching its own data while the profile loads |
 
@@ -47,6 +47,23 @@ inside SessionProviders, imports the light or dark theme into a **cascade layer*
 So the theme sits above Tailwind's preflight (PrimeReact's buttons keep their look) and below
 Tailwind's utilities and every unlayered rule in `globals.css` and `primereact-theme.css`, wherever
 it lands in the page. The storefront downloads none of it (`e2e/buyer/home.spec.ts` checks).
+
+## The theme script
+
+Three things were tried; one works.
+
+- **Inline `<script>` in the dashboard or sign-in layout:** React refuses to run a `<script>` it
+  creates in the browser, and those layouts are created in the browser whenever someone clicks
+  their way in ("Encountered a script tag while rendering React component").
+- **`next/script` with `beforeInteractive`:** queued by Next's runtime and run after the HTML is
+  parsed, too late to stop the flash.
+- **Inline `<script>` in the root layout's `<head>`** (what we do): runs while the HTML is parsed,
+  and the root layout is drawn once by the server and never again in the browser. It changes
+  `<html>` before React hydrates, so `<html>` carries `suppressHydrationWarning`, React's documented
+  exception for this; it covers that element's own attributes only.
+
+`e2e/buyer/navigation.spec.ts` clicks storefront, sign-in, dashboard and back with the console
+watched, and checks a dark-mode hard load is dark at first paint with a silent console.
 
 ## Things that read the browser
 

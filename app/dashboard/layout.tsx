@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import DashboardLayout from "@/components/dashboard/layout/DashboardLayout";
 import SessionProviders from "@/components/auth/SessionProviders";
-import { THEME_BOOT_SCRIPT } from "@/contexts/ThemeContext";
 import { APP_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
@@ -16,15 +15,13 @@ export const metadata: Metadata = {
 
 /**
  * Static: no cookies are read on the server (see SessionProviders), so every dashboard page is
- * prerendered and navigates instantly. The script puts a dark theme on before the first paint.
+ * prerendered and navigates instantly. The dark theme goes on before the first paint from the
+ * root layout's boot script (lib/themeBoot.ts).
  */
 export default function DashboardRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
-      <SessionProviders>
-        <DashboardLayout>{children}</DashboardLayout>
-      </SessionProviders>
-    </>
+    <SessionProviders>
+      <DashboardLayout>{children}</DashboardLayout>
+    </SessionProviders>
   );
 }

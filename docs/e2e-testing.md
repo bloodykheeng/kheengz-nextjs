@@ -37,6 +37,7 @@ Accounts default to the seeded Admin (`admin@kheengz.com` / `Kheengz@2026`); ove
 | Spec | Checks |
 | --- | --- |
 | `buyer/home.spec.ts` | The home page greets buyers and links sellers to sign in; it downloads no PrimeReact theme (storefront pages never do); it fits 393 px with no sideways scroll; an unknown path shows Page not found, not a sign-in page |
+| `buyer/navigation.spec.ts` | Clicking storefront, sign-in, dashboard and back raises no console error or warning (layouts drawn in the browser show problems a reload hides); a dark-mode viewer is dark at first paint with a silent console, and the storefront stays light |
 | `buyer/sign-in.spec.ts` | A signed-out visit to the dashboard goes to sign-in; a wrong password is refused on the form; the seeded Admin signs in through the form and lands on the dashboard with the admin menu |
 | `admin/dashboard.spec.ts` | The dashboard's shortcuts; Users lists the seeded Admin; Roles shows Admin, Staff and Vendor; the audit trail shows sign-ins, a Where column and the DB-IP credit; Queues opens; dark mode switches and survives a reload |
 
@@ -51,6 +52,6 @@ Accounts default to the seeded Admin (`admin@kheengz.com` / `Kheengz@2026`); ove
 
 ## Before a change is done
 
-Besides the specs, open the changed screens with the browser console showing (or run a script that
-collects console errors): Next's instant-navigation checks and React's hydration checks report
-there in development, and both must be silent. See [sessions-and-cache-components.md](sessions-and-cache-components.md).
+Besides the specs, open the changed screens with the browser console showing, by a full load AND by
+clicking into them from another page: Next's instant-navigation checks and React's hydration and
+script checks report there in development, some only on one of the two, and all must be silent. See [sessions-and-cache-components.md](sessions-and-cache-components.md).

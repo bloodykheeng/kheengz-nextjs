@@ -41,18 +41,6 @@ function applyTheme(theme: Theme): void {
 }
 
 /**
- * The inline script the dashboard and sign-in layouts put before their content: it applies a
- * dark theme before the first paint, so a dark-mode user never sees a light flash while React
- * loads. Built from THEME_COOKIE so the two can never disagree on the name.
- */
-export const THEME_BOOT_SCRIPT = [
-  "try{",
-  `if(document.cookie.split("; ").indexOf("${THEME_COOKIE}=dark")>-1){`,
-  'var h=document.documentElement;h.classList.add("dark");h.style.colorScheme="dark";',
-  "}}catch(e){}",
-].join("");
-
-/**
  * Light or dark for the dashboards and sign-in pages. Storefront pages use the shop's own look,
  * so leaving these pages takes the dark class off again.
  */

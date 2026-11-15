@@ -6,6 +6,7 @@ import PrimeReactCtx from "@/contexts/PrimeReactContext";
 import { PrimeReactToastContext } from "@/contexts/PrimeReactToastContext";
 import TanstackContext from "@/contexts/TanstackContext";
 import NextJsProgressBar from "@/utils/NextJsProgressBar";
+import { THEME_BOOT_SCRIPT } from "@/lib/themeBoot";
 import { APP_NAME as appName } from "@/lib/brand";
 
 // Headlines in a confident geometric sans, everything read at length in Inter.
@@ -52,8 +53,8 @@ export const viewport: Viewport = {
 /**
  * Static on purpose: no cookies or headers are read here, so with Cache Components every
  * storefront page can be served from its prerendered shell. Signed-in providers (theme,
- * session, PrimeReact's theme, sidebar) live in components/auth/SessionProviders.tsx behind
- * the dashboard's and sign-in pages' <Suspense>.
+ * session, PrimeReact's theme, sidebar) live in components/auth/SessionProviders.tsx, mounted by
+ * the dashboard and sign-in layouts and read in the browser.
  */
 export default function RootLayout({
   children,
@@ -61,7 +62,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${display.variable} ${body.variable} ${geistMono.variable} h-full antialiased`}>
+    // suppressHydrationWarning: the theme script below may add `dark` and a color-scheme to <html>
+    // before React hydrates, on purpose. React's documented exception for exactly this; it covers
+    // <html>'s own attributes only, so a real mismatch anywhere inside the page is still reported.
+    <html
+      lang="en"
+      className={`${display.variable} ${body.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Dark mode before the first paint on dashboard and sign-in pages (lib/themeBoot.ts). Inline
+            and in the root layout on purpose: it must run while the HTML is parsed (next/script's
+            beforeInteractive queues it until later), and the root layout is never drawn again in
+            the browser, so React never has to create a <script> during navigation. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <NextJsProgressBar />
         <PrimeReactCtx>
