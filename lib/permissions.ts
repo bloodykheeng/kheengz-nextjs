@@ -13,6 +13,9 @@ export const PERMISSIONS = [
   "view queue",
   "manage queue",
   "manage settings",
+  "view vendors",
+  "manage vendors",
+  "run shops",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
