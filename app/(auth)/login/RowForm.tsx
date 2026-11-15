@@ -8,7 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "nextjs-toploader/app";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import Link from "next/link";
 import { MdLockOutline, MdVisibility, MdVisibilityOff } from "react-icons/md";
 import { postToLogin } from "@/services/auth/auth-service";
@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import CredentialInput, { looksLikePhone } from "@/components/auth/CredentialInput";
 import { isValidPhone, PHONE_HINT } from "@/lib/phone";
 import { clearRememberedAccount, setRememberedAccount, useRememberedAccount } from "@/lib/rememberedAccount";
+import { FieldError, inputCls } from "@/components/auth/fields";
 
 // Schema
 
@@ -35,31 +36,10 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-// Helpers
-
-function FieldError({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return (
-    <p role="alert" className="mt-1.5 text-xs font-medium text-red-500">
-      {msg}
-    </p>
-  );
-}
-
-function inputCls(error?: boolean) {
-  return [
-    "w-full rounded-lg border bg-(--cream-deep) py-2.5 text-sm text-(--ink)",
-    "placeholder:text-(--ink)/55 outline-none transition-all",
-    error
-      ? "border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-400/20"
-      : "border-(--brand)/20 focus:border-(--brand) focus:ring-2 focus:ring-(--brand-ring)",
-  ].join(" ");
-}
-
 // Component
 
 export default function LoginRowForm() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { login } = useAuth();
   const [showPw, setShowPw] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);

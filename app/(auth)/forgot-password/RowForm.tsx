@@ -9,7 +9,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "nextjs-toploader/app";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import {
   MdLockOutline,
   MdVisibility,
@@ -23,17 +23,9 @@ import {
   postOtpValidate,
   postOtpResetPassword,
 } from "@/services/auth/auth-service";
+import { FieldError, inputCls } from "@/components/auth/fields";
 
 // Shared helpers
-
-function FieldError({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return (
-    <p role="alert" className="mt-1.5 text-xs font-medium text-red-500">
-      {msg}
-    </p>
-  );
-}
 
 function ServerError({ msg }: { msg?: string | null }) {
   if (!msg) return null;
@@ -45,16 +37,6 @@ function ServerError({ msg }: { msg?: string | null }) {
       {msg}
     </div>
   );
-}
-
-function inputCls(error?: boolean) {
-  return [
-    "w-full rounded-lg border bg-(--cream-deep) py-2.5 text-sm text-(--ink)",
-    "placeholder:text-(--ink)/55 outline-none transition-all",
-    error
-      ? "border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-400/20"
-      : "border-(--brand)/20 focus:border-(--brand) focus:ring-2 focus:ring-(--brand-ring)",
-  ].join(" ");
 }
 
 // Step indicator
@@ -383,7 +365,7 @@ function Step3Form({
 // Success view
 
 function SuccessView() {
-  const router = useRouter();
+  const router = useAppRouter();
 
   useEffect(() => {
     const t = setTimeout(() => router.push("/login"), 2500);

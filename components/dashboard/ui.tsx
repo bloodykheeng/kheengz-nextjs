@@ -93,9 +93,18 @@ const SEVERITY: Record<string, Severity> = {
   Sending: "info",
   Completed: "success",
   Sent: "success",
-  // records (RecordStatus)
+  // records (RecordStatus), shops (ShopStatus)
   Active: "success",
   Inactive: "secondary",
+  Draft: "secondary",
+  "Pending review": "warning",
+  "Changes requested": "warning",
+  Suspended: "danger",
+  Closed: "secondary",
+  // vendors (VendorStatus), payout destinations
+  Approved: "success",
+  Verified: "success",
+  "Awaiting review": "warning",
 };
 
 const LABEL: Record<string, string> = { Successful: "Paid" };
@@ -126,13 +135,33 @@ export function Field({ label, required, hint, error, htmlFor, children, classNa
   children: React.ReactNode;
   className?: string;
 }) {
+  const caption = (
+    <>
+      {label}
+      {required && (
+        <span aria-hidden className="text-red-500">
+          {" "}*
+        </span>
+      )}
+    </>
+  );
+
   return (
     // data-invalid turns every control inside red (app/globals.css, "Invalid fields").
     <div className={`min-w-0 space-y-1.5 ${className}`} data-invalid={error ? "true" : undefined}>
-      <label htmlFor={htmlFor} className="block text-sm font-medium text-(--text-primary)">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      {children}
+      {htmlFor ? (
+        <>
+          <label htmlFor={htmlFor} className="block text-sm font-medium text-(--text-primary)">{caption}</label>
+          {children}
+        </>
+      ) : (
+        // No id to point at: the label wraps its control, so the browser and screen readers name the
+        // control by it (and a test finds it by its label) without every form inventing ids.
+        <label className="block space-y-1.5">
+          <span className="block text-sm font-medium text-(--text-primary)">{caption}</span>
+          {children}
+        </label>
+      )}
       {error ? <small className="block text-xs text-red-500">{error}</small> : hint && <small className="block text-xs text-(--text-muted)">{hint}</small>}
     </div>
   );
