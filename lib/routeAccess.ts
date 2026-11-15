@@ -12,9 +12,14 @@
 
 const COMMON = ["/dashboard", "/dashboard/profile", "/dashboard/notifications"];
 
+// The marketplace: reviewers see every vendor and shop (D31, D35).
+const MARKETPLACE = ["/dashboard/vendors", "/dashboard/shops"];
+// A vendor's own business and the shops they run (the API narrows to theirs).
+const SELLING = ["/dashboard/vendor", "/dashboard/shops"];
+
 // The platform's people and its machinery: Admin only.
 const ADMINISTRATION = ["/dashboard/users"];
-const SETTINGS = ["/dashboard/roles", "/dashboard/queues", "/dashboard/audit-trail"];
+const SETTINGS = ["/dashboard/roles", "/dashboard/queues", "/dashboard/audit-trail", "/dashboard/platform-settings"];
 
 /**
  * Whether a path is a dashboard page. Only these need a session: everything else is the
@@ -26,9 +31,9 @@ export function isDashboardRoute(pathname: string): boolean {
 }
 
 export const ROLE_ROUTES: Record<string, string[]> = {
-  Admin: [...COMMON, ...ADMINISTRATION, ...SETTINGS],
-  Staff: [...COMMON],
-  Vendor: [...COMMON],
+  Admin: [...COMMON, ...MARKETPLACE, ...ADMINISTRATION, ...SETTINGS],
+  Staff: [...COMMON, ...MARKETPLACE],
+  Vendor: [...COMMON, ...SELLING],
 };
 
 /**

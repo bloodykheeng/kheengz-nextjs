@@ -20,10 +20,15 @@ interface Shortcut {
 // Only pages that exist: each Phase 1 module adds its own (orders, products, payouts) and the
 // figures for this page (sales today, orders waiting, money paid out).
 const SHORTCUTS: Shortcut[] = [
+  { href: "/dashboard/vendor", label: "My business", body: "Your papers, where you are paid, your people.", icon: "pi-briefcase", permission: "run shops" },
+  { href: "/dashboard/shops", label: "My shops", body: "Open shops and send each for review.", icon: "pi-shop", permission: "run shops" },
+  { href: "/dashboard/vendors", label: "Vendors", body: "Check applications and papers, approve or suspend.", icon: "pi-id-card", permission: "view vendors" },
+  { href: "/dashboard/shops", label: "Shops", body: "Review shops waiting to open.", icon: "pi-shop", permission: "view vendors" },
   { href: "/dashboard/users", label: "Users", body: "Add Admins, Staff and vendors, and turn accounts on or off.", icon: "pi-users", permission: "view users" },
   { href: "/dashboard/roles", label: "Roles & permissions", body: "Choose what each role may see and do.", icon: "pi-shield", permission: "manage roles" },
   { href: "/dashboard/queues", label: "Queues", body: "Emails, SMS and other work waiting or failed.", icon: "pi-list", permission: "view queue" },
   { href: "/dashboard/audit-trail", label: "Audit trail", body: "Who changed what, when, and from where.", icon: "pi-history", permission: "view activity logs" },
+  { href: "/dashboard/platform-settings", label: "Platform settings", body: "Commission, fees, debt limits, ways to pay.", icon: "pi-sliders-h", permission: "manage settings" },
 ];
 
 /** Greets the person, links to what their role can open, and holds the place for the shop's figures. */
@@ -31,7 +36,9 @@ export default function DashboardHome() {
   const { user } = useAuth();
   const { can } = usePermissions();
   const greeting = useTimeGreeting();
-  const shortcuts = SHORTCUTS.filter((s) => can(s.permission) && canAccessRoute(user?.role, s.href));
+  // One card per page: a reviewer who also runs shops sees "Shops" once.
+  const shortcuts = SHORTCUTS.filter((s) => can(s.permission) && canAccessRoute(user?.role, s.href))
+    .filter((s, i, all) => all.findIndex((o) => o.href === s.href) === i);
 
   return (
     <div className="space-y-6">

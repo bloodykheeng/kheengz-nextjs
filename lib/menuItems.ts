@@ -11,6 +11,24 @@ export const menuGroups: NavGroup[] = [
     items: [{ id: "dashboard", label: "Dashboard", href: "/dashboard", iconName: "dashboard", exact: true }],
   },
   {
+    // A vendor's people: their business and the shops they run.
+    id: "selling",
+    label: "Selling",
+    items: [
+      { id: "my-business", label: "My business", href: "/dashboard/vendor", iconName: "shop", permission: "run shops" },
+      { id: "my-shops", label: "My shops", href: "/dashboard/shops", iconName: "orders", permission: "run shops" },
+    ],
+  },
+  {
+    // Reviewers: every vendor and shop (D31, D35).
+    id: "marketplace",
+    label: "Marketplace",
+    items: [
+      { id: "vendors", label: "Vendors", href: "/dashboard/vendors", iconName: "people", permission: "view vendors" },
+      { id: "shops", label: "Shops", href: "/dashboard/shops", iconName: "shop", permission: "view vendors" },
+    ],
+  },
+  {
     id: "administration",
     label: "Administration",
     items: [
@@ -23,6 +41,7 @@ export const menuGroups: NavGroup[] = [
           { id: "roles", label: "Roles & permissions", href: "/dashboard/roles", iconName: "shield", permission: "manage roles" },
           { id: "queues", label: "Queues", href: "/dashboard/queues", iconName: "queue", permission: "view queue" },
           { id: "audit-trail", label: "Audit trail", href: "/dashboard/audit-trail", iconName: "history", permission: "view activity logs" },
+          { id: "platform-settings", label: "Platform settings", href: "/dashboard/platform-settings", iconName: "wallet", permission: "manage settings" },
         ],
       },
     ],
