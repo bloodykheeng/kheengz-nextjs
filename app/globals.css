@@ -1,26 +1,323 @@
+/* Cascade layers, lowest first. PrimeReact's theme (loaded by components/auth/PrimeReactTheme.tsx
+   on dashboard and sign-in pages only) goes in `primereact`: above Tailwind's preflight, so its
+   buttons and inputs keep their look, and below Tailwind's utilities and every unlayered rule
+   here and in primereact-theme.css, so those win wherever the theme lands in the page. The
+   storefront never loads it. The order PrimeReact's Tailwind guide gives. */
+@layer theme, base, primereact, components, utilities;
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* No `@source` on a vendor theme file. A copied-project leftover pointed this at
+   saga-blue (a theme this app does not even load), which made Tailwind mine that
+   stylesheet for class-shaped tokens and emit utilities like `.text-gray-700` that
+   nothing here writes, purely to fight the overrides below. Our own files are
+   scanned automatically; vendor CSS must not be a content source. */
+
+/* Prime icons*/
+@import "primeicons/primeicons.css";
+
+/* Everything that exists purely to bend PrimeReact into our look. Kept in its own file so
+   this one stays about the app's tokens and layout, not vendor overrides. */
+@import "./primereact-theme.css";
+
+/* Class-based dark mode: .dark on <html> activates dark: variants */
+@variant dark (&:where(.dark, .dark *));
+
+@custom-variant print (@media print);
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ═══════════════════════════════════════════════════════════
+   KHEENGZ: PLATFORM TOKENS (the dashboards; workspace D8, "Royal")
+   Primary: royal green (close to the loaded lara-*-emerald
+   PrimeReact theme)   Accent: gold. Storefront pages use each
+   shop's own brand tokens instead (D19), never these.
+   Theme-independent: these keep the same value in light & dark
+   so a `bg-(--brand)` button reads identically in both.
+═══════════════════════════════════════════════════════════ */
+:root {
+  --brand: #0e5e45;
+  --brand-mid: #147a5a;
+  /* Brand green for text and icons; lifts to mint in dark mode, where #0e5e45 vanishes. */
+  --brand-ink: #0e5e45;
+  --brand-dark: #0a4433;
+  --brand-light: #e2f2eb;
+  --brand-ring: rgba(14, 94, 69, 0.28);
+
+  --accent: #a87a10;
+  --accent-mid: #d9a21b;
+  --accent-light: #fbf1d6;
+
+  /* The sign-in pages' ground and ink: warm ivory and a green-black. Dark mode
+     inverts them below. */
+  --cream: #f8f5ee;
+  --cream-deep: #efe9dc;
+  --ink: #10261e;
+  --rose: #e6f1ea;
+
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-danger: #dc2626;
+  --color-info: #0284c7;
+  --color-orange: #ea580c;
+}
+
+/* ── Light theme ─────────────────────────────────── */
+:root {
+  --bg-page: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-nav: #ffffff;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --border-color: #e2e8f0;
+
+  --sidebar-active-bg: #e2f2eb;
+  --sidebar-active-text: #0e5e45;
+  --sidebar-hover-bg: #f8fafc;
+
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-md:
+    0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+
+  /* Page scrollbar: green over gold. Properties because the
+     scrollbar rule has to stay on the universal selector (see the block near
+     the bottom), and custom properties are the only thing that reaches it. */
+  --sb-top: #0e5e45;
+  --sb-top-strong: #147a5a;
+  --sb-bottom: #d9a21b;
+  --sb-bottom-strong: #e6b43a;
+  --sb-sheen: rgb(255 255 255 / 0.28);
+  --sb-shade: rgb(0 0 0 / 0.18);
+}
+
+/* ── Dark theme ──────────────────────────────────── */
+.dark {
+  --brand-ink: #7fd0ad;
+  /* The pale brand tint (unread rows, avatars) as a deep green on a dark page. */
+  --brand-light: #163126;
+  --cream: #0b1712;
+  --cream-deep: #10211a;
+  --ink: #f5f1e8;
+  --rose: #163126;
+  --bg-page: #0f172a;
+  --bg-card: #1e293b;
+  --bg-sidebar: #1e293b;
+  --bg-nav: #1e293b;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+
+  --border-color: #334155;
+
+  --sidebar-active-bg: rgba(95, 191, 154, 0.18);
+  --sidebar-active-text: #7fd0ad;
+  --sidebar-hover-bg: #273549;
+
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+
+  /* On a dark page the green lifts a step so the thumb is not lost in the gutter. */
+  --sb-top: #1f7a5c;
+  --sb-top-strong: #279270;
+  --sb-sheen: rgb(255 255 255 / 0.16);
+  --sb-shade: rgb(0 0 0 / 0.26);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans, Arial, Helvetica, sans-serif);
+}
+
+/* ── Page scrollbar: the brand colours along the thumb ──
+   READ docs/public-pages-layout-and-chrome.md §5 BEFORE CHANGING THIS. Four
+   separate things go wrong here and each one fails silently.
+
+   Only the document scrollbar is dressed. Element scrollbars (sidebar nav,
+   dropdown panels, data tables) keep a plain thumb further down: a flag inside a
+   200px dropdown is noise, and those are the ones people actually aim at.
+
+   The thumb keeps a transparent border with `background-clip: content-box`, so
+   it floats in the gutter instead of filling it, and stays a grabbable 8px.
+
+   Written against the UNIVERSAL selector on purpose. `html::-webkit-scrollbar-*`
+   does not reliably match the viewport scrollbar in Chrome, because that
+   scrollbar is the viewport's rather than the html element's. The proof is the
+   plain `::-webkit-scrollbar-thumb` rule in primereact-theme.css: it is what
+   paints the page scrollbar today, so it is the selector that reaches it.
+   This block sits after that import, so equal specificity resolves in its
+   favour on source order. `.dark` needs its own copy only because the rule it
+   overrides is class-scoped and would otherwise outrank this one. */
+::-webkit-scrollbar {
+  width: 14px;
+}
+
+/* The brand's two colours run ALONG the thumb: green for most of its length,
+   gold at the foot, the way the mark's roots sit under its crown. Read down
+   the length in two calm bands it is a brand, not hazard tape.
+
+   The bands are CUSTOM PROPERTIES, not `.dark` overrides, and that is the
+   whole trick. `.dark` lives on <html>, and an html-scoped scrollbar selector
+   does not match the viewport scrollbar, so `.dark::-webkit-scrollbar-thumb`
+   silently never applies. Only the universal selector reaches this scrollbar.
+   Custom properties inherit into the pseudo-element, so the theme can swap the
+   ink without needing a selector that cannot win. */
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+  /* Safety net. If var() ever fails to resolve here the whole background-image
+     is invalid and the thumb would vanish; this keeps a solid, grabbable bar. */
+  background-color: var(--sb-top, #0f4c3a);
+  background-image:
+    linear-gradient(
+      90deg,
+      var(--sb-sheen, rgb(255 255 255 / 0.28)) 0%,
+      rgb(255 255 255 / 0) 55%,
+      var(--sb-shade, rgb(0 0 0 / 0.18)) 100%
+    ),
+    linear-gradient(
+      180deg,
+      var(--sb-top, #0f4c3a) 0%,
+      var(--sb-top, #0f4c3a) 62%,
+      var(--sb-bottom, #d9a520) 70%,
+      var(--sb-bottom, #d9a520) 100%
+    );
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sb-top-strong, #1a6b52);
+  background-image:
+    linear-gradient(
+      90deg,
+      var(--sb-sheen, rgb(255 255 255 / 0.28)) 0%,
+      rgb(255 255 255 / 0) 55%,
+      var(--sb-shade, rgb(0 0 0 / 0.18)) 100%
+    ),
+    linear-gradient(
+      180deg,
+      var(--sb-top-strong, #1a6b52) 0%,
+      var(--sb-top-strong, #1a6b52) 62%,
+      var(--sb-bottom-strong, #eab52a) 70%,
+      var(--sb-bottom-strong, #eab52a) 100%
+    );
+}
+
+/* The cord is for the page, not for the furniture. Anything that scrolls inside
+   the UI keeps a plain thumb: a rope inside a dropdown or a data table is noise,
+   and those are the scrollbars people actually aim at. */
+.p-component::-webkit-scrollbar-thumb,
+.p-component *::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: var(--border-color);
+  background-image: none;
+}
+
+/* Firefox paints no gradient thumb: `scrollbar-color` only takes solid colours,
+   so the page scrollbar there is simply gold. Gated on `-moz-appearance`, which
+   Chrome does not support, so Chrome never sees `scrollbar-color` on the root.
+   That matters: setting it would switch Chrome to standard scrollbar rendering
+   and it would drop every `::-webkit-scrollbar` rule above. */
+@supports (-moz-appearance: none) {
+  html {
+    scrollbar-color: var(--accent-mid) var(--bg-page);
+  }
+}
+
+/* Scrollbars.
+
+   The thumb was 4px on a track the same colour as the page, which on a long
+   report is a hairline nobody can see, let alone grab. 10px with a thumb that
+   actually contrasts, and darker again on hover so it reads as something you
+   can drag. `--border-color` is the page's faintest line by design, which is
+   exactly the wrong token for a control. */
+.overflow-y-auto,
+.overflow-auto,
+.overflow-x-auto {
+  scrollbar-width: auto;
+  scrollbar-color: var(--text-muted) transparent;
+}
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-auto::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background-color: var(--text-muted);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 9999px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-auto::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-secondary);
+}
+
+/* A CLICKABLE THING SHOWS A HAND, which Tailwind v4 stopped doing.
+
+   v3's preflight set `cursor: pointer` on buttons. v4 dropped it to match the
+   browser default, which for `<button>` is `cursor: default`, so every button
+   in this portal has been showing an arrow: the sidebar's close button, every
+   dialog action, every table row action, the funnels. Nothing looked broken,
+   which is why it survived; it just quietly read as not-clickable.
+
+   Fixed here rather than by adding `cursor-pointer` to several hundred call
+   sites, and scoped to what is actually actionable: a disabled control keeps
+   the default arrow, because a hand over something that will not respond is
+   the same lie one step further on.
+
+   This is the upgrade note Tailwind publishes for v4. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  select:not(:disabled),
+  /* Native checkboxes and radios, and a label wrapping one (a vendor accepting the terms,
+     "remember me"): the whole line is clickable, so it shows the hand. */
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  label:has(> input[type="checkbox"]:not(:disabled)),
+  label:has(> input[type="radio"]:not(:disabled)) {
+    cursor: pointer;
+  }
+}
+
+/* ── Invalid fields ─────────────────────────────────────────────────────────
+   A field in error is red on its border, whichever control it is. `Field`
+   (components/dashboard/ui.tsx) marks its wrapper data-invalid when it shows an
+   error, so a control that was not given `invalid` still turns red; PhoneField
+   and InfiniteSelect carry p-invalid themselves. */
+:root { --invalid: #dc2626; }
+[data-invalid="true"] :is(.p-inputtext, .p-dropdown, .p-multiselect, .p-inputnumber-input, .p-password-input, .p-calendar .p-inputtext, .p-selectbutton, textarea),
+.p-inputtext.p-invalid, .p-dropdown.p-invalid, .p-multiselect.p-invalid, .p-invalid > .p-inputtext,
+.gip-phone.react-international-phone-input-container.p-invalid,
+[data-invalid="true"] .gip-phone.react-international-phone-input-container {
+  border-color: var(--invalid) !important;
+}
+[data-invalid="true"] :is(.p-inputtext, .p-dropdown, .p-multiselect, textarea):focus-within,
+.gip-phone.react-international-phone-input-container.p-invalid:focus-within,
+[data-invalid="true"] .gip-phone.react-international-phone-input-container:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--invalid) 18%, transparent) !important;
 }

@@ -1,0 +1,604 @@
+/* PrimeReact theme overrides.
+ *
+ * Split out of globals.css so the app`s own design tokens and layout rules stay readable:
+ * everything here exists only to bend a vendor component into our look, and it grows every
+ * time a new PrimeReact widget is used. globals.css imports it.
+ *
+ * READ docs/primereact-theming.md BEFORE ADDING A RULE HERE. Every override that has
+ * silently failed in this file failed for one of two reasons: the selector was written for
+ * an older PrimeReact DOM, or something else was painting the element. The doc has the
+ * three-command recipe for telling which, and the three cases that already bit us.
+ */
+/* ================================== prime react custom configs start ============================ */
+
+.card {
+  padding: 2em;
+}
+
+/* remove underline on links  */
+a:-webkit-any-link {
+  text-decoration: none;
+}
+
+/* Tailwind v4 resets native <button> to `cursor: default`; restore the pointer
+   for all enabled buttons / role=button (disabled keeps default via :disabled). */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+/* ── Scrollbar-free horizontal strips (filter chip rows, drill-down crumbs) ── */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============ custom scrollbar =========== */
+/* #region */
+
+/* width & height */
+::-webkit-scrollbar {
+  width: 16px; /* adjust as needed */
+  height: 16px;
+}
+
+/* track (background) */
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* thumb (scroll handle) - default light mode */
+::-webkit-scrollbar-thumb {
+  background-color: #d6dee1;
+  border-radius: 20px;
+  border: 4px solid transparent;
+  background-clip: content-box;
+}
+
+/* thumb hover - light mode */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #a8bbbf;
+}
+
+/* Dark mode overrides */
+.dark::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* dark gray */
+  border: 4px solid transparent;
+  background-clip: content-box;
+}
+
+.dark::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280; /* lighter gray on hover */
+}
+
+/* #endregion */
+/* ============ custom scrollbar end ===========*/
+
+/* Override PrimeReact Paginator Dropdown */
+.p-paginator .p-dropdown {
+  width: auto !important;
+  min-width: 100px;
+  max-width: 150px;
+}
+
+/* PrimeReact Responsive CSS */
+.p-datatable .p-datatable-tbody > tr > td > .p-column-title {
+  display: none;
+  font-weight: 600;
+}
+
+@media screen and (max-width: 960px) {
+  .p-datatable .p-datatable-thead > tr > th,
+  .p-datatable .p-datatable-tfoot > tr > td {
+    display: none !important;
+  }
+
+  /* A scrollable table lays each row out as a nowrap flex row; stacked cells
+     at full width then sit side by side off the right edge. The row wraps,
+     the table takes the screen, and nothing scrolls sideways. */
+  .p-datatable .p-datatable-wrapper {
+    overflow-x: hidden !important;
+  }
+
+  /* As blocks, not a table: a table grows to its widest cell's content (a
+     heading beside a long name) however narrow the screen, and a block does not. */
+  .p-datatable .p-datatable-table,
+  .p-datatable .p-datatable-scrollable-table,
+  .p-datatable .p-datatable-tbody {
+    display: block;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .p-datatable .p-datatable-tbody > tr {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100% !important;
+  }
+
+  .p-datatable .p-datatable-tbody > tr > td:not(:last-child) {
+    border: 0 none;
+  }
+
+  .p-datatable .p-datatable-tbody > tr > td {
+    display: flex;
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    align-items: center;
+    justify-content: space-between !important;
+    overflow-wrap: anywhere;
+  }
+
+  .p-datatable .p-datatable-tbody > tr > td > .p-column-title {
+    display: block;
+    flex-shrink: 0;
+    margin-right: 1rem;
+  }
+
+  /* The value sits against the right edge as one block, so a two-line cell
+     (a name over its district, a contact over their phone) lines up with
+     the one-line cells above and below it. */
+  .p-datatable .p-datatable-tbody > tr > td > .p-column-title ~ * {
+    text-align: right;
+    margin-left: auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* A block value (a name over its school, a run of chips) takes the width
+     left of the line; a tag or a number keeps its own size. */
+  .p-datatable .p-datatable-tbody > tr > td > .p-column-title ~ div {
+    flex: 1 1 auto;
+  }
+
+  /* A run of chips (a contestant's score cards) fills the width from the
+     right and wraps onto more lines rather than running off. */
+  .p-datatable .p-datatable-tbody > tr > td > .p-column-title ~ .flex,
+  .p-datatable .p-datatable-tbody > tr > td > .p-column-title ~ * .flex-wrap {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* ================================== prime react custom configs end ============================ */
+/* =========================
+   PRIME REACT: MOBILE SPACING
+   ========================= */
+@media (max-width: 640px) {
+  .p-card,
+  .p-panel,
+  .p-tabview-panel,
+  .p-tabview-panels,
+  .p-accordion-content {
+    padding: 0.5rem !important;
+    border-radius: 0.75rem;
+  }
+}
+
+/* ── react-international-phone: match PrimeReact inputs, follow light/dark ──
+   The library's stylesheet is imported from the component, so it can load AFTER
+   this file. Doubling the class (.gip-phone.react-international-phone-input-container)
+   raises specificity so these rules win regardless of import order.
+
+   The library paints the country button and the number field as two separate bordered
+   boxes side by side. PrimeReact has no such control; every other field in a form is
+   ONE bordered box, so the border moves onto the container here and both children are
+   stripped bare. The control then reads as a single .p-inputtext with a flag inside it,
+   with no seam between the two halves. */
+.gip-phone.react-international-phone-input-container {
+  --react-international-phone-text-color: var(--text-primary);
+  --react-international-phone-dropdown-item-background-color: var(--bg-card);
+  --react-international-phone-dropdown-item-text-color: var(--text-primary);
+  --react-international-phone-dropdown-item-background-color-hover: var(--sidebar-hover-bg);
+  --react-international-phone-selected-dropdown-item-background-color: var(--sidebar-active-bg);
+  /* Rule under the pinned countries. It defaults to the library's border colour,
+     which we no longer set (the container owns the border), so name it explicitly
+     or it falls back to a hard-coded grey that is invisible in dark mode. */
+  --react-international-phone-dropdown-preferred-list-divider-color: var(--border-color);
+
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-card);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Hover + focus mirror the treatment .p-inputtext gets, so the field reacts
+   like its siblings. */
+.gip-phone.react-international-phone-input-container:hover {
+  border-color: var(--brand);
+}
+.gip-phone.react-international-phone-input-container:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 0.2rem var(--brand-ring);
+}
+
+/* Both children give up their own border, background and height; the container owns
+   those now. Height is left to derive from .p-inputtext's padding + font-size rather
+   than the library's fixed --react-international-phone-height, which would have to be
+   kept in sync with the theme by hand and silently drift out of it. */
+.gip-phone.react-international-phone-input-container .react-international-phone-country-selector {
+  display: flex;
+}
+.gip-phone.react-international-phone-input-container .react-international-phone-country-selector-button {
+  align-self: stretch;
+  height: auto;
+  padding: 0 0.25rem 0 0.625rem;
+  border: 0;
+  border-radius: 6px 0 0 6px;
+  margin: 0;
+  background: transparent;
+}
+.gip-phone.react-international-phone-input-container .react-international-phone-country-selector-button:hover {
+  background: transparent;
+}
+.gip-phone.react-international-phone-input-container .react-international-phone-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  padding: 0.75rem 0.75rem 0.75rem 0.375rem;
+  border: 0;
+  border-radius: 0 6px 6px 0;
+  background: transparent;
+  font-size: 1rem;
+}
+
+/* The dropdown hangs off a fixed 44px default that assumed the library's own input
+   height; anchor it to the control's actual bottom edge instead. */
+.gip-phone.react-international-phone-input-container .react-international-phone-country-selector-dropdown {
+  top: 100%;
+}
+
+/* Error state: the border lives on the container now, so that is what turns red,
+   matching PrimeReact's .p-invalid inputs. */
+.gip-phone.react-international-phone-input-container.p-invalid {
+  border-color: #ef4444;
+}
+
+/* ── Password (toggleMask): the "shortened password box" ──
+   With `toggleMask`, PrimeReact 10.9 wraps the input in an IconField:
+
+     span.p-password > span.p-icon-field.p-icon-field-right > input.p-password-input + svg
+
+   `className` lands on `.p-password` and `inputClassName` on the input, so neither
+   `w-full` reaches that middle `.p-icon-field`, and lara widens it only under a
+   `.p-fluid` ancestor (`.p-fluid .p-icon-field-right { width: 100% }`). With no such
+   ancestor it stays `display: inline-block` at intrinsic width and caps the input,
+   so the field sits visibly short of every sibling in the same grid row.
+
+   Fixed here, once, rather than by wrapping forms in `p-fluid` (which restyles every
+   input inside) or repeating a `pt={{ iconField: … }}` block at each call site.
+
+   Do NOT reach for `.p-password.p-input-icon-right > .p-input-icon`: that is the
+   pre-IconField DOM from older PrimeReact and matches nothing here. Icon placement
+   and the input's `padding-right: 2.5rem` already come from the lara theme. */
+.p-password {
+  display: inline-flex;
+  width: 100%;
+}
+.p-password > .p-icon-field {
+  display: block;
+  width: 100%;
+}
+.p-password .p-password-input {
+  width: 100%;
+}
+
+/* The eye toggle. Lara centres it with `top: 50%; margin-top: -0.5rem`, half of an
+   assumed 1rem icon, so it sits a couple of pixels low the moment the real icon is
+   any other height. Centre it on its own height instead, the same
+   `top-1/2 -translate-y-1/2` the hand-rolled password fields on the auth pages use,
+   so every eye in the app sits identically. Both selectors are listed because the
+   toggle carries `p-password-show-icon` / `p-password-hide-icon` and only picks up
+   `p-input-icon` from the IconField wrapper. */
+.p-password > .p-icon-field > .p-input-icon,
+.p-password .p-password-show-icon,
+.p-password .p-password-hide-icon {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  margin-top: 0;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.p-password > .p-icon-field > .p-input-icon:hover,
+.p-password .p-password-show-icon:hover,
+.p-password .p-password-hide-icon:hover {
+  color: var(--text-primary);
+}
+
+/* Invalid selects. The theme reddens .p-inputtext inputs (text / number fields),
+   but a .p-dropdown swallows .p-invalid and the InfiniteSelect trigger is a plain
+   <button>. Force the red border for both so an invalid select reads exactly like
+   an invalid text field. */
+.p-dropdown.p-invalid,
+.p-multiselect.p-invalid,
+button.p-inputtext.p-invalid {
+  border-color: #ef4444 !important;
+}
+
+/* ── Auth-page variant of .gip-phone ───────────────────────────────────────────
+   The public pages (login, forgot password) carry no PrimeReact, so their inputs are
+   plain Tailwind: a card fill and a brand focus ring. This keeps .gip-phone's structure
+   (one bordered box, children stripped bare) and restates only the metrics that
+   differ, so the dashboard and the auth pages cannot drift apart. Applied as
+   `gip-phone gip-phone--auth`; these rules follow the base block, so at equal
+   specificity they win. */
+.gip-phone--auth.react-international-phone-input-container {
+  border-radius: 0.5rem;
+  border-color: var(--border-color);
+  background: var(--bg-card);
+}
+
+/* The sibling inputs react on focus only; they have no hover state to match. */
+.gip-phone--auth.react-international-phone-input-container:hover {
+  border-color: var(--border-color);
+}
+.gip-phone--auth.react-international-phone-input-container:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.2);
+}
+.gip-phone--auth.react-international-phone-input-container .react-international-phone-input {
+  padding: 0.625rem 0.75rem 0.625rem 0.375rem;
+  font-size: 0.875rem;
+}
+/* ══════════════════════════════════════════════════════════════════════════════
+   DARK MODE
+   ══════════════════════════════════════════════════════════════════════════════
+   components/auth/PrimeReactTheme.tsx loads lara-light-emerald or lara-dark-emerald
+   into the `primereact` cascade layer (app/globals.css), following the theme. So a dark PrimeReact theme IS loaded in dark mode; the rules below exist
+   to pull that theme onto OUR tokens (--bg-card, --brand, …) rather than lara's
+   own palette, so PrimeReact widgets and hand-built Tailwind ones match.
+
+   `!important` appears on the overlay rules because PrimeReact renders panels into
+   a portal at the end of <body>, where the vendor rules would otherwise win on
+   source order. */
+
+/* ── Inputs ── */
+.dark .p-inputtext,
+.dark .p-inputtextarea,
+.dark .p-password-input {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+.dark .p-inputtext::placeholder,
+.dark .p-inputtextarea::placeholder {
+  color: var(--text-muted);
+}
+.dark .p-inputtext:enabled:hover {
+  border-color: var(--brand-mid);
+}
+.dark .p-inputtext:enabled:focus {
+  border-color: var(--brand-mid);
+  box-shadow: 0 0 0 0.2rem var(--brand-ring);
+}
+
+/* ── Dropdown ── */
+.dark .p-dropdown {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+.dark .p-dropdown .p-dropdown-label {
+  color: var(--text-primary);
+}
+.dark .p-dropdown .p-dropdown-label.p-placeholder,
+.dark .p-dropdown .p-dropdown-trigger {
+  color: var(--text-muted);
+}
+.dark .p-dropdown:not(.p-disabled):hover {
+  border-color: var(--brand-mid);
+}
+.dark .p-dropdown:not(.p-disabled).p-focus {
+  border-color: var(--brand-mid);
+  box-shadow: 0 0 0 0.2rem var(--brand-ring);
+}
+.dark .p-dropdown-panel,
+.dark .p-multiselect-panel {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.5) !important;
+}
+.dark .p-dropdown-item,
+.dark .p-multiselect-item {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+.dark .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover,
+.dark .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover {
+  background: var(--sidebar-hover-bg) !important;
+  color: var(--text-primary) !important;
+}
+.dark .p-dropdown-item.p-highlight,
+.dark .p-multiselect-item.p-highlight {
+  background: var(--sidebar-active-bg) !important;
+  color: var(--brand-mid) !important;
+}
+.dark .p-dropdown-filter,
+.dark .p-dropdown-panel .p-dropdown-header {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ── Dialog ── */
+
+/* Every dialog names its width inline (`minWidth: 560px, width: 56vw` and the
+   like), sized for a desk. On a phone that is wider than the screen and the
+   dialog is pushed off the left edge. One rule, with !important to beat the
+   inline style, holds every dialog to the screen: never wider than it, and
+   below `sm` no minimum at all. Tall forms scroll inside the dialog. */
+.p-dialog {
+  max-width: calc(100vw - 2rem) !important;
+  max-height: 92vh !important;
+}
+
+@media (max-width: 640px) {
+  .p-dialog {
+    min-width: 0 !important;
+    width: calc(100vw - 2rem) !important;
+    margin: 0 !important;
+  }
+
+  .p-dialog .p-dialog-content {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+.dark .p-dialog .p-dialog-header,
+.dark .p-dialog .p-dialog-content,
+.dark .p-dialog .p-dialog-footer {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+.dark .p-dialog .p-dialog-header,
+.dark .p-dialog .p-dialog-footer {
+  border-color: var(--border-color);
+}
+.dark .p-dialog .p-dialog-header .p-dialog-header-icon {
+  color: var(--text-muted);
+}
+.dark .p-dialog .p-dialog-header .p-dialog-header-icon:enabled:hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--text-primary);
+}
+.dark .p-dialog-mask.p-component-overlay {
+  background: rgb(0 0 0 / 0.6) !important;
+}
+
+/* ── DataTable ── */
+.dark .p-datatable .p-datatable-header,
+.dark .p-datatable .p-datatable-footer,
+.dark .p-datatable .p-datatable-thead > tr > th,
+.dark .p-datatable .p-datatable-tbody > tr,
+.dark .p-paginator {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+.dark .p-datatable .p-datatable-tbody > tr > td {
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+.dark .p-datatable .p-datatable-tbody > tr:hover {
+  background: var(--sidebar-hover-bg);
+}
+.dark .p-datatable .p-sortable-column:not(.p-highlight):hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--text-primary);
+}
+.dark .p-paginator .p-paginator-page,
+.dark .p-paginator .p-paginator-first,
+.dark .p-paginator .p-paginator-prev,
+.dark .p-paginator .p-paginator-next,
+.dark .p-paginator .p-paginator-last {
+  color: var(--text-secondary);
+}
+.dark .p-paginator .p-paginator-page.p-highlight {
+  background: var(--sidebar-active-bg);
+  color: var(--brand-mid);
+}
+
+/* ── Checkbox, radio, switch ──
+   `.p-highlight` sits on the `.p-checkbox` / `.p-radiobutton` ROOT, never on the
+   inner `.p-checkbox-box`. An override written as `.p-checkbox-box.p-highlight`
+   therefore matches nothing, and lara's own checked fill survives: a pale
+   `#5fbf9a` in dark and `#0e5e45` in light, the theme’s own green (recoloured to the Kheengz palette).
+
+   Lara also expresses hover as `:not(.p-disabled):has(.p-checkbox-input:hover)`
+   (the real <input> is a transparent overlay on top of the box, so `:hover` on the
+   box itself is not what the theme keys off). The hover variants have to repeat
+   that shape or a checked box washes out to `#bfdbfe` the moment the pointer
+   crosses it. */
+
+/* Unchecked: lara's box is near-black `#111827` in dark and white in light;
+   both ignore our surface tokens. */
+.dark .p-checkbox .p-checkbox-box,
+.dark .p-radiobutton .p-radiobutton-box {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+/* Checked, light: pull lara's primary onto --brand. */
+.p-checkbox.p-highlight .p-checkbox-box,
+.p-checkbox:not(.p-disabled):has(.p-checkbox-input:hover).p-highlight .p-checkbox-box,
+.p-radiobutton.p-highlight .p-radiobutton-box,
+.p-radiobutton:not(.p-disabled):has(.p-radiobutton-input:hover).p-highlight .p-radiobutton-box {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+/* Checked, dark: --brand is a deep navy that disappears against the near-black
+   surface, so the brighter --brand-mid carries the fill here. */
+.dark .p-checkbox.p-highlight .p-checkbox-box,
+.dark .p-checkbox:not(.p-disabled):has(.p-checkbox-input:hover).p-highlight .p-checkbox-box,
+.dark .p-radiobutton.p-highlight .p-radiobutton-box,
+.dark .p-radiobutton:not(.p-disabled):has(.p-radiobutton-input:hover).p-highlight .p-radiobutton-box {
+  background: var(--brand-mid);
+  border-color: var(--brand-mid);
+}
+
+/* The tick / dot. Lara paints it near-black (`#030712`) because it sits on that
+   pale fill; on a saturated brand emerald it reads as a smudge. */
+.p-checkbox .p-checkbox-box .p-checkbox-icon,
+.p-radiobutton .p-radiobutton-box .p-radiobutton-icon {
+  color: #ffffff;
+}
+
+/* Hover on an unchecked box: border only, matching how inputs react. */
+.p-checkbox:not(.p-disabled):has(.p-checkbox-input:hover) .p-checkbox-box,
+.p-radiobutton:not(.p-disabled):has(.p-radiobutton-input:hover) .p-radiobutton-box {
+  border-color: var(--brand-mid);
+}
+
+.dark .p-inputswitch .p-inputswitch-slider {
+  background: var(--border-color);
+}
+
+/* ── SelectButton (the status filters) ── */
+.dark .p-selectbutton .p-button {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+.dark .p-selectbutton .p-button.p-highlight {
+  background: var(--brand) !important;
+  border-color: var(--brand) !important;
+  color: #ffffff !important;
+}
+
+/* ── Overlays that also portal out of the tree ── */
+.dark .p-tooltip .p-tooltip-text,
+.dark .p-overlaypanel,
+.dark .p-menu,
+.dark .p-tieredmenu {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* ── FileUpload (the photo picker) ── */
+.dark .p-fileupload .p-fileupload-content,
+.dark .p-fileupload .p-fileupload-buttonbar {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Replaces a blanket `.dark li { color: … !important }` that used to sit in globals.css:
+   it repainted every list item on the page (sidebar, menus, prose) to fix one panel. */
+.dark .p-multiselect-label,
+.dark .p-multiselect .p-multiselect-token {
+  color: var(--text-primary);
+}
