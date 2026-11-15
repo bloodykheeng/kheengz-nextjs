@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "nextjs-toploader/app";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import { Button } from "primereact/button";
 import { MdArrowOutward } from "react-icons/md";
 import type { AppNotification } from "@/services/notifications/notifications-service";
@@ -16,7 +16,7 @@ import { dateTime, timeAgo } from "@/lib/format";
  * it off at once (it cannot be pressed twice) and is put back only if the API says no.
  */
 export default function NotificationsList() {
-  const router = useRouter();
+  const router = useAppRouter();
   const [unreadOnly, setUnreadOnly] = useState(false);
   const { feed, items, unread, total, markRead, markAll, remove } = useNotificationFeed({ scope: "page", perPage: 5, unreadOnly });
 

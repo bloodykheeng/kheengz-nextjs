@@ -8,12 +8,11 @@ import {
     MutationCache,
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useRouter } from "nextjs-toploader/app";
-import { usePathname } from "next/navigation";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { handleApiError, type HandleApiErrorDeps } from "@/lib/handleApiError";
 
-// The handler needs toast/router/pathname/queryClient, which come from hooks, but the
+// The handler needs toast and router, which come from hooks, but the
 // cache error handlers are built once when the client is created. There is a single
 // TanstackContext instance, so the provider parks the latest deps here (refreshed in an
 // effect, never during render) and the handlers, which only run at error time, read
@@ -96,14 +95,13 @@ function makeQueryClient(): QueryClient {
 
 export default function TanstackContext({ children }: { children: ReactNode }) {
     const toast = usePrimeReactToast();
-    const router = useRouter();
-    const pathname = usePathname();
+    const router = useAppRouter();
 
     const [queryClient] = useState(makeQueryClient);
 
     useEffect(() => {
-        errorDeps = { toast, router, pathname };
-    }, [toast, router, pathname]);
+        errorDeps = { toast, router };
+    }, [toast, router]);
 
     return (
         <QueryClientProvider client={queryClient}>

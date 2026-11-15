@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
-import { useRouter } from "nextjs-toploader/app";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import { useQuery } from "@tanstack/react-query";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
@@ -143,7 +143,7 @@ const failedColumns = [
 export default function RecordsList({ queueType }: { queueType: "jobs" | "failed" }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
+  const router = useAppRouter();
 
   const page = Number(searchParams.get("page")) || DEFAULT_PAGE;
   const pageSize = Number(searchParams.get("pageSize")) || DEFAULT_PAGE_SIZE;

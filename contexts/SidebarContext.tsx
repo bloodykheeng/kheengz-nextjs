@@ -6,8 +6,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { usePathname } from "next/navigation";
-import { useResetWhen } from "@/hooks/useResetOnOpen";
 
 // Types
 
@@ -49,11 +47,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [hoverState, setIsHovering] = useState(false);
 
-  const pathname = usePathname();
-
-  // Close the mobile drawer on every route change (fixes stale-open bug after 404 nav),
-  // before the new page paints.
-  useResetWhen(pathname, () => setIsMobileOpen(false));
+  // The mobile drawer closes when one of its links is tapped (SidebarItem, the logo), an event
+  // rather than a watch on the URL: reading the URL here would keep the dashboard shell of a page
+  // like /dashboard/shops/{id} out of its prerender (Cache Components).
 
   // Hovering only counts in hover mode, so leaving that mode drops it without a reset.
   const isHovering = sidebarState === "hover" && hoverState;

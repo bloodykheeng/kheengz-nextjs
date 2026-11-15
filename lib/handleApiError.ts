@@ -20,7 +20,6 @@ interface Toast {
 export interface HandleApiErrorDeps {
   toast: Toast;
   router: { push: (href: string) => void };
-  pathname: string;
 }
 
 /**
@@ -41,9 +40,11 @@ export interface HandleApiErrorDeps {
  */
 export function handleApiError(
   error: unknown,
-  { toast, router, pathname }: HandleApiErrorDeps,
+  { toast, router }: HandleApiErrorDeps,
 ): void {
   if (!error) return;
+  // Read now, when the error arrives: the page the person is on at that moment.
+  const pathname = window.location.pathname;
 
   const isOnline =
     typeof navigator === "undefined" ||

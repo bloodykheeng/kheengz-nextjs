@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useRouter } from "nextjs-toploader/app";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import {
   useQuery,
   useMutation,
@@ -59,7 +59,7 @@ interface AuthContextProps {
 const AuthCtx = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthContext({ children }: AuthContextProps) {
-  const router = useRouter();
+  const router = useAppRouter();
   const queryClient = useQueryClient();
   const primeReactToast = usePrimeReactToast();
   const hydrated = useHydrated();

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useSearchParams, usePathname } from "next/navigation";
-import { useRouter } from "nextjs-toploader/app";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import { TabView, TabPanel } from "primereact/tabview";
 import StatCards from "./StatCards";
 import RecordsList from "./RecordsList";
@@ -18,7 +18,7 @@ const LIST_PARAMS = ["page", "pageSize", "search", "queue", "sort"];
 export default function QueueTabsPage() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
+  const router = useAppRouter();
 
   const activeIndex = searchParams.get("tab") === "failed" ? 1 : 0;
 

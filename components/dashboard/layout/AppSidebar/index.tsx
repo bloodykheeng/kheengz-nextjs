@@ -2,7 +2,7 @@
 
 import { LogoMark } from "@/components/brand/Logo";
 import Link from "next/link";
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { MdClose } from "react-icons/md";
 import SidebarItem from "./SidebarItem";
@@ -19,7 +19,6 @@ interface AppSidebarProps {
 }
 
 export default function AppSidebar({ groups }: AppSidebarProps) {
-  const pathname = usePathname();
   const {
     isMobileOpen,
     isExpanded,
@@ -145,25 +144,12 @@ export default function AppSidebar({ groups }: AppSidebarProps) {
             "Settings"); see lib/menuItems.ts. The divider is for the collapsed
             rail, where the entries are icons with no labels and the heading
             cannot be drawn. */}
-        {visibleGroups.map((group, idx) => (
-          <div key={group.id} className={idx > 0 ? "mt-4" : ""}>
-            {group.label && isExpanded && (
-              <p className="mb-1.5 px-3 text-[10px] font-semibold tracking-widest text-(--text-muted) uppercase">
-                {group.label}
-              </p>
-            )}
-            {!isExpanded && idx > 0 && (
-              <hr className="my-2 border-(--border-color)" />
-            )}
-            <ul className="space-y-0.5">
-              {group.items.map((item) => (
-                <li key={item.id}>
-                  <SidebarItem item={item} depth={0} pathname={pathname} />
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        {/* The current page is read from the URL inside this boundary only, so the rest of the
+            shell is prerendered even for a page like /dashboard/shops/{id}; the menu shows
+            without a highlight until the address is known. */}
+        <Suspense fallback={<NavGroups groups={visibleGroups} isExpanded={isExpanded} pathname="" />}>
+          <CurrentNavGroups groups={visibleGroups} isExpanded={isExpanded} />
+        </Suspense>
       </nav>
 
       {/* User footer */}
@@ -211,5 +197,32 @@ export default function AppSidebar({ groups }: AppSidebarProps) {
         )}
       </div>
     </aside>
+  );
+}
+
+/** The menu with the page the person is on highlighted. Reads the URL: render it inside <Suspense>. */
+function CurrentNavGroups({ groups, isExpanded }: { groups: NavGroup[]; isExpanded: boolean }) {
+  return <NavGroups groups={groups} isExpanded={isExpanded} pathname={usePathname()} />;
+}
+
+function NavGroups({ groups, isExpanded, pathname }: { groups: NavGroup[]; isExpanded: boolean; pathname: string }) {
+  return (
+    <>
+      {groups.map((group, idx) => (
+        <div key={group.id} className={idx > 0 ? "mt-4" : ""}>
+          {group.label && isExpanded && (
+            <p className="mb-1.5 px-3 text-[10px] font-semibold tracking-widest text-(--text-muted) uppercase">{group.label}</p>
+          )}
+          {!isExpanded && idx > 0 && <hr className="my-2 border-(--border-color)" />}
+          <ul className="space-y-0.5">
+            {group.items.map((item) => (
+              <li key={item.id}>
+                <SidebarItem item={item} depth={0} pathname={pathname} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </>
   );
 }

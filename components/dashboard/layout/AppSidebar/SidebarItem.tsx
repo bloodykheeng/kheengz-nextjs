@@ -27,7 +27,7 @@ interface SidebarItemProps {
 }
 
 export default function SidebarItem({ item, depth, pathname }: SidebarItemProps) {
-  const { isExpanded } = useSidebar();
+  const { isExpanded, closeMobile } = useSidebar();
   const isCollapsed = !isExpanded;
   const isRoot = depth === 0;
 
@@ -123,7 +123,7 @@ export default function SidebarItem({ item, depth, pathname }: SidebarItemProps)
   }
 
   return (
-    <Link href={item.href!} className={itemCls}>
+    <Link href={item.href!} className={itemCls} onClick={closeMobile}>
       {inner}
     </Link>
   );

@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
-import { useRouter } from "nextjs-toploader/app";
+import { useAppRouter } from "@/hooks/useAppRouter";
 
 export const DEFAULT_PAGE = 1;
 
@@ -27,7 +27,7 @@ export const DEFAULT_PAGE_SIZE = 5;
 export function useListParams(defaultPageSize = DEFAULT_PAGE_SIZE) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
+  const router = useAppRouter();
 
   const page = Number(searchParams.get("page")) || DEFAULT_PAGE;
   const pageSize = Number(searchParams.get("pageSize")) || defaultPageSize;

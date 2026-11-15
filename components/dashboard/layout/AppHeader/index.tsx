@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { MdMenu, MdMenuOpen } from "react-icons/md";
 import Breadcrumb from "./Breadcrumb";
 import ThemeToggle from "../../../common/ThemeToggle";
@@ -52,7 +53,10 @@ export default function AppHeader() {
 
       {/* Breadcrumb */}
       <div className="hidden min-w-0 flex-1 sm:block">
-        <Breadcrumb />
+        {/* It reads the URL: in its own boundary, so the header is prerendered on every page. */}
+        <Suspense fallback={null}>
+          <Breadcrumb />
+        </Suspense>
       </div>
 
       {/* Right actions */}

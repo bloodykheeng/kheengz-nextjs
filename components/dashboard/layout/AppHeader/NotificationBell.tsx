@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "nextjs-toploader/app";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useInView } from "react-intersection-observer";
 import { MdArrowOutward, MdOutlineNotifications } from "react-icons/md";
@@ -88,7 +88,7 @@ const Section = ({ label, count }: { label: string; count: number }) => (
  * channel carries `records.changed`, which refetches the screens it names (lib/liveRecords.ts).
  */
 export default function NotificationBell() {
-  const router = useRouter();
+  const router = useAppRouter();
   const { user } = useAuth();
   const toast = usePrimeReactToast();
   const queryClient = useQueryClient();
