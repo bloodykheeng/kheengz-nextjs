@@ -92,6 +92,12 @@ how forms ended up confirming, or sending, input that could not succeed. Copy
   typed `AxiosError<ApiErrorBody>`, never `any`.
 - **Red borders**: wrap each control in `Field` with `error={errors.x?.message}`; `Field` marks itself
   `data-invalid` and app/globals.css turns any control inside red.
+- **Labels name their control.** Without `htmlFor`, `Field` wraps its label around the control, so
+  screen readers read it and tests find the input with `getByLabel("Shop name")`. Pass `htmlFor` (and
+  the same `id` on the control) only when the control is not inside `Field`'s children. A PrimeReact
+  `Dropdown` labels a hidden input: a test opens it by clicking `.p-dropdown` filtered by its placeholder.
+- **Phones typed into a plain box** (the sell form): `typedPhone()` accepts 0772 123 456 as people
+  write it; send `toPhoneDigits(value)`.
 - **Numbers**: an empty `InputNumber` is `NaN` in the form; the schema's `z.number({ error: "Enter the amount." })` refuses it.
 - **Pickers** are `InfiniteSelect` holding the whole `Option`, typed `z.custom<Option | null>()`.
 
@@ -168,6 +174,7 @@ depends on the cache. GiftNest's `WithdrawalRequestDialog` is the example.
 
 Go there first, then let the list catch up: `invalidateQueries({ refetchType: "none" })` marks the
 list stale and `router.push()` runs while the dialog stays up with its button spinning.
+`router` is always `useAppRouter()` (section 16).
 
 ## 13. A decision someone else already made
 
@@ -188,6 +195,18 @@ as "1"/"0", each array item as its own `key[]` entry, null and "" left out.
   a buyer of the software sees their own name.
 - Placeholders say what the search matches ("Name, email, phone or username").
 - Copy rules: GiftNest's `ui-copy-standard.md` (`D:\coding\new wave\giftnest\giftnest-workspace`). No em dashes.
+
+## 16. Navigating and reading the URL
+
+- **Navigate with [`useAppRouter()`](../hooks/useAppRouter.ts)**, never `nextjs-toploader/app`'s
+  `useRouter`: that one reads `usePathname()` while rendering, which under Cache Components keeps the
+  whole dashboard shell of a dynamic page (`/dashboard/shops/[id]`) out of its prerender, and the
+  build fails. `useAppRouter` starts the top loader on push and replace, and reads the current address
+  from `window.location` only when the person navigates.
+- **A component that reads the URL** (`usePathname`, `useParams`, `useSearchParams`) renders inside
+  `<Suspense>`: the page's own body (see [shops/[id]/page.tsx](../app/dashboard/shops/[id]/page.tsx)),
+  the sidebar menu's highlight, the breadcrumb. Shared code (contexts, `handleApiError`) never reads it
+  during render; it reads `window.location` when it needs the address.
 
 ## Checking it
 

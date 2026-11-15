@@ -31,7 +31,12 @@ before any page renders. So:
 | The providers | [components/auth/SessionProviders.tsx](../components/auth/SessionProviders.tsx), a client component mounted by the dashboard and sign-in layouts only |
 | The shell | [DashboardLayout.tsx](../components/dashboard/layout/DashboardLayout.tsx) always renders the sidebar, header and page, hidden and `inert` under [AuthLoadingScreen](../components/auth/AuthLoadingScreen.tsx) until the profile lands. The page is therefore in the prerendered shell, and starts fetching its own data while the profile loads |
 
-`next build` shows every route as `○ (Static)`.
+| URL reads | Never in the shell during render. The sidebar's highlight and the breadcrumb read `usePathname()` inside their own `<Suspense>`; the router is [useAppRouter](../hooks/useAppRouter.ts) (no `nextjs-toploader/app`, which reads the pathname); contexts and [lib/handleApiError.ts](../lib/handleApiError.ts) read `window.location` when they need it. A dynamic page reads `useParams()` inside `<Suspense>` in its page file |
+
+`next build` shows every route as `○ (Static)`, and pages with an id in the address
+(`/dashboard/shops/[id]`, `/dashboard/vendors/[id]`) as `◐ (Partial Prerender)`: the shell is static,
+the record's body fills in. If the build reports "usePathname() ... outside of `<Suspense>`", a URL
+read has crept into the shell.
 
 ## PrimeReact only where it is used
 
@@ -74,7 +79,7 @@ server snapshot: [hooks/useHydrated.ts](../hooks/useHydrated.ts), [hooks/useTime
 
 ## Checking it
 
-- `next build`: every route `○`, no build errors about uncached data.
+- `next build`: every route `○` or `◐`, no build errors about uncached data or URL data.
 - Open each changed screen in development with the console showing: no instant-navigation errors and
   no hydration errors. The e2e suite covers the flows ([e2e-testing.md](e2e-testing.md)).
 - Empty `NEXT_PUBLIC_*` values count as unset (`||`, not `??`): `.env.production` keeps them blank

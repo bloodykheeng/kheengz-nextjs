@@ -28,7 +28,8 @@ Accounts default to the seeded Admin (`admin@kheengz.com` / `Kheengz@2026`); ove
 | [e2e/auth.setup.ts](../e2e/auth.setup.ts) | Signs each account in through `POST /v1/auth/login` once and saves the session as the app keeps it: the cookies named in [lib/authCookies.ts](../lib/authCookies.ts) (the token, and the URI-encoded profile `{id,name,role,email}`) |
 | `e2e/admin/*.spec.ts` | Run signed in as the seeded Admin |
 | `e2e/buyer/*.spec.ts` | No session: the storefront and the sign-in page itself |
-| [e2e/global-teardown.ts](../e2e/global-teardown.ts) | `php artisan e2e:cleanup` after the run (removes `e2e-…@example.com` accounts; refuses in production) |
+| [e2e/helpers/laravel.ts](../e2e/helpers/laravel.ts) | Reads from the local API what an email would carry (`verificationCodeFor`, through `php artisan tinker` in `../kheengz-laravel`, or `E2E_LARAVEL_DIR`), and `freshNin()`. Local runs only |
+| [e2e/global-teardown.ts](../e2e/global-teardown.ts) | `php artisan e2e:cleanup` after the run (removes `e2e-…@example.com` accounts and the vendors only they run, with their shops, payout destinations and papers; refuses in production) |
 
 `e2e/.auth/`, `test-results/` and `playwright-report/` are git-ignored: the saved sessions hold real tokens.
 
@@ -36,9 +37,10 @@ Accounts default to the seeded Admin (`admin@kheengz.com` / `Kheengz@2026`); ove
 
 | Spec | Checks |
 | --- | --- |
-| `buyer/home.spec.ts` | The home page greets buyers and links sellers to sign in; it downloads no PrimeReact theme (storefront pages never do); it fits 393 px with no sideways scroll; an unknown path shows Page not found, not a sign-in page |
+| `buyer/home.spec.ts` | The home page greets buyers and links to Sign in and Sell on Kheengz; it downloads no PrimeReact theme (storefront pages never do); it fits 393 px with no sideways scroll; an unknown path shows Page not found, not a sign-in page |
 | `buyer/navigation.spec.ts` | Clicking storefront, sign-in, dashboard and back raises no console error or warning (layouts drawn in the browser show problems a reload hides); a dark-mode viewer is dark at first paint with a silent console, and the storefront stays light |
 | `buyer/sign-in.spec.ts` | A signed-out visit to the dashboard goes to sign-in; a wrong password is refused on the form; the seeded Admin signs in through the form and lands on the dashboard with the admin menu |
+| `buyer/vendor-journey.spec.ts` | Serial, through the real screens: a seller applies on `/sell`, confirms the emailed code, uploads both ID sides, adds a Mobile Money number in their own name (Verified at once), opens a shop, chooses where it is paid and sends it for review; then the Admin approves the vendor and the shop, and the shop is Active |
 | `admin/dashboard.spec.ts` | The dashboard's shortcuts; Users lists the seeded Admin; Roles shows Admin, Staff and Vendor; the audit trail shows sign-ins, a Where column and the DB-IP credit; Queues opens; dark mode switches and survives a reload |
 
 ## Writing a spec
@@ -48,6 +50,11 @@ Accounts default to the seeded Admin (`admin@kheengz.com` / `Kheengz@2026`); ove
 - A spec that changes data makes its own and cleans it up (or uses an `e2e-…@example.com` account
   that the teardown removes).
 - Buyer pages are checked at **393 x 852** as well as desktop: most buyers are on a phone.
+- A form control is found by its label (`getByLabel`): `Field` links them. The exception is a
+  PrimeReact `Dropdown`, whose label points at a hidden input: click `.p-dropdown` filtered by its
+  placeholder, then `getByRole("option")`. A label with a required asterisk is matched by a pattern
+  (`/^Address/`).
+- A flow that needs an emailed code reads it with `verificationCodeFor(email)`.
 - Each Phase 1 module adds its specs here and a row to the table above.
 
 ## Before a change is done
