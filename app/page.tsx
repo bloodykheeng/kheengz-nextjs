@@ -23,7 +23,7 @@ export default function HomePage() {
             href="/login"
             className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-(--brand-ink) transition-colors hover:bg-(--brand-light)"
           >
-            Sell here? Sign in
+            Sign in
           </Link>
         </div>
       </header>
@@ -42,6 +42,13 @@ export default function HomePage() {
               <span className="pi pi-clock" aria-hidden />
               The first shops open soon
             </span>
+            <Link
+              href="/sell"
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-(--brand)/30 px-5 text-sm font-semibold text-(--brand-ink) transition-colors hover:bg-(--brand-light)"
+            >
+              <span className="pi pi-shop" aria-hidden />
+              Sell on {APP_NAME}
+            </Link>
           </div>
         </section>
 

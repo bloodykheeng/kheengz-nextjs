@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { AxiosError } from "axios";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
-import { isValidPhone, PHONE_HINT } from "@/lib/phone";
+import { isValidPhone, PHONE_HINT, toPhoneDigits } from "@/lib/phone";
 import { APP_NAME } from "@/lib/brand";
 
 /**
@@ -42,6 +42,13 @@ export const phone = (required = true) =>
   required
     ? z.string().trim().min(1, "Enter the phone number.").refine(isValidPhone, PHONE_HINT)
     : z.string().trim().refine((v) => !v || isValidPhone(v), PHONE_HINT);
+
+/**
+ * A phone typed into a plain box (no country picker), the way people write it: a Ugandan mobile as
+ * 0772 123 456 or with 256, or any number with its country code. Send `toPhoneDigits(value)`.
+ */
+export const typedPhone = () =>
+  z.string().trim().min(1, "Enter the phone number.").refine((v) => isValidPhone(toPhoneDigits(v)), "Enter your phone number, like 0772 123 456, or with its country code.");
 
 /** The only numbers Mobile Money pays and SMS reaches: an MTN or Airtel Uganda mobile, 2567XXXXXXXX. */
 export const UG_MOBILE_HINT = "Enter an MTN or Airtel Uganda number, like 0772 123 456.";

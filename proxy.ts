@@ -17,7 +17,7 @@ import { AUTH_TOKEN_COOKIE, AUTH_PROFILE_COOKIE } from "@/lib/authCookies";
  * they cannot use.
  */
 
-const AUTH_PAGES = new Set(["/login", "/forgot-password"]);
+const AUTH_PAGES = new Set(["/login", "/forgot-password", "/sell"]);
 
 function readRole(raw: string): string | null {
   try {

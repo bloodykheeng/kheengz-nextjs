@@ -15,7 +15,8 @@ test("the home page greets buyers, points sellers to sign in, and loads no dashb
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Pay on delivery.");
   await expect(page.getByText("No account, no password")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sell here? Sign in" })).toHaveAttribute("href", "/login");
+  await expect(page.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+  await expect(page.getByRole("link", { name: /Sell on/ })).toHaveAttribute("href", "/sell");
   expect(themeRequests).toEqual([]);
 });
 

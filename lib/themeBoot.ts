@@ -12,7 +12,7 @@ import { THEME_COOKIE } from "@/lib/authCookies";
  */
 export const THEME_BOOT_SCRIPT = [
   "try{",
-  'if(/^\\/(dashboard|login|forgot-password)(\\/|$)/.test(location.pathname)',
+  'if(/^\\/(dashboard|login|forgot-password|sell)(\\/|$)/.test(location.pathname)',
   `&&document.cookie.split("; ").indexOf("${THEME_COOKIE}=dark")>-1){`,
   'var h=document.documentElement;h.classList.add("dark");h.style.colorScheme="dark";',
   "}}catch(e){}",

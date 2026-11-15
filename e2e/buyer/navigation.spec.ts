@@ -21,7 +21,7 @@ test("clicking from the storefront to sign-in, into the dashboard and back raise
   const problems = collectConsoleProblems(page);
 
   await page.goto("/");
-  await page.getByRole("link", { name: "Sell here? Sign in" }).click();
+  await page.getByRole("link", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/login$/);
 
   await page.getByPlaceholder(/email/i).fill(EMAIL);

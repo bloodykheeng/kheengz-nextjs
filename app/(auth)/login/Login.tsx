@@ -28,7 +28,13 @@ export default function Login() {
           <div className="w-full max-w-100">
             <Logo className="mb-10 lg:hidden" />
             <LoginRowForm />
-            <p className="mt-10 text-center text-sm text-(--ink)/60">
+            <p className="mt-6 text-center text-sm text-(--ink)/60">
+              Want to sell?{" "}
+              <Link href="/sell" className="font-semibold text-(--brand-ink) hover:underline">
+                Apply to sell on {APP_NAME}
+              </Link>
+            </p>
+            <p className="mt-2 text-center text-sm text-(--ink)/60">
               Shopping? You do not need an account.{" "}
               <Link href="/" className="font-semibold text-(--brand-ink) hover:underline">
                 Go to the shops
