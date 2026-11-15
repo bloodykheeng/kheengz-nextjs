@@ -1,0 +1,64 @@
+# Sessions, Cache Components and the static shell
+
+Next 16.4's `create-next-app` turns on **Cache Components** (`cacheComponents: true` in
+[next.config.ts](../next.config.ts)), and we keep it: every page is prerendered into a static
+shell that opens at once, which matters most on a buyer's phone on mobile data. It changes how a
+page may read the request, and that decided how the session works here. Bundled guides:
+`node_modules/next/dist/docs/01-app/02-guides/authentication-with-cache-components.md` and
+`instant-navigation.md`.
+
+## The rule
+
+With Cache Components, anything that reads the request (cookies, headers) must sit behind a
+`<Suspense>` boundary, and **a page left out of the prerendered shell cannot be navigated to
+instantly**: in development Next reports it as "Could not validate that a segment in your UI has
+instant navigation ... dropped segment".
+
+## What we do
+
+**The server never reads the session.** GiftNest read the sign-in cookies in its root layout so
+the first paint knew the user. Here that would make every page dynamic, the storefront too, and
+reading them in the dashboard layout instead holds every dashboard page behind the request (the
+"dropped segment" above). Nothing on those pages needs the server to know the user: their data is
+fetched in the browser by TanStack Query, and [proxy.ts](../proxy.ts) keeps signed-out visitors away
+before any page renders. So:
+
+| Piece | Where |
+| --- | --- |
+| Who may open which page | [proxy.ts](../proxy.ts), from the cookies, before render. Only `/dashboard/...` needs a session; every other path is the storefront, open to all (`isDashboardRoute`, [lib/routeAccess.ts](../lib/routeAccess.ts)) |
+| The session (token, profile, permissions) | [contexts/AuthContext.tsx](../contexts/AuthContext.tsx), in the browser. `isProfileLoading` stays true until the browser has hydrated, so the server and the first browser render agree |
+| The theme | [contexts/ThemeContext.tsx](../contexts/ThemeContext.tsx), the cookie read through `useSyncExternalStore` (light on the server). `THEME_BOOT_SCRIPT`, inline in the dashboard and sign-in layouts, puts the dark class on before the first paint, so there is no light flash |
+| The providers | [components/auth/SessionProviders.tsx](../components/auth/SessionProviders.tsx), a client component mounted by the dashboard and sign-in layouts only |
+| The shell | [DashboardLayout.tsx](../components/dashboard/layout/DashboardLayout.tsx) always renders the sidebar, header and page, hidden and `inert` under [AuthLoadingScreen](../components/auth/AuthLoadingScreen.tsx) until the profile lands. The page is therefore in the prerendered shell, and starts fetching its own data while the profile loads |
+
+`next build` shows every route as `○ (Static)`.
+
+## PrimeReact only where it is used
+
+Dashboards use PrimeReact; storefront pages never do (CLAUDE.md). Its lara theme (~250 KB) is not
+linked from the root layout as GiftNest did. [PrimeReactTheme.tsx](../components/auth/PrimeReactTheme.tsx),
+inside SessionProviders, imports the light or dark theme into a **cascade layer**:
+
+```css
+/* app/globals.css, before Tailwind */
+@layer theme, base, primereact, components, utilities;
+```
+
+So the theme sits above Tailwind's preflight (PrimeReact's buttons keep their look) and below
+Tailwind's utilities and every unlayered rule in `globals.css` and `primereact-theme.css`, wherever
+it lands in the page. The storefront downloads none of it (`e2e/buyer/home.spec.ts` checks).
+
+## Things that read the browser
+
+Rendering anything from the clock, a cookie or localStorage on the server gives a different answer
+than the browser, and React reports a hydration mismatch. Read them with `useSyncExternalStore` and a
+server snapshot: [hooks/useHydrated.ts](../hooks/useHydrated.ts), [hooks/useTimeGreeting.ts](../hooks/useTimeGreeting.ts)
+("Welcome" on the server, "Good evening" in the browser), [lib/rememberedAccount.ts](../lib/rememberedAccount.ts).
+
+## Checking it
+
+- `next build`: every route `○`, no build errors about uncached data.
+- Open each changed screen in development with the console showing: no instant-navigation errors and
+  no hydration errors. The e2e suite covers the flows ([e2e-testing.md](e2e-testing.md)).
+- Empty `NEXT_PUBLIC_*` values count as unset (`||`, not `??`): `.env.production` keeps them blank
+  until the domain exists.

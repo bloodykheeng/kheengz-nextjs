@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# kheengz-nextjs
 
-## Getting Started
+The Kheengz web app: the storefront buyers use (no account, Buy now or cart, pay on delivery) and the
+dashboards for the platform's Admins and Staff and for vendors. Next.js 16 (App Router, Cache
+Components), React 19, TanStack Query, react-hook-form + zod, Tailwind 4; PrimeReact 10 on dashboards
+only. The API is [kheengz-laravel](https://github.com/bloodykheeng/kheengz-laravel).
 
-First, run the development server:
+Workspace instructions, plan and decisions: `../CLAUDE.md`, `../WORK-PLAN.md`, `../docs/decisions.md`.
+How this app does things: [docs/](docs/README.md).
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+# .env.development is not in git: copy it from ../../deployment/server-env/ or rebuild it from .env.example
+npm run dev            # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The API must be running (`php artisan serve`, `queue:work`, `reverb:start` in kheengz-laravel). Sign in
+at `/login` with the seeded Admin, `admin@kheengz.com` / `Kheengz@2026`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Check it
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx tsc --noEmit -p tsconfig.json
+npx eslint app components lib services hooks contexts e2e types utils proxy.ts
+npx next build          # every route should be ○ (Static)
+npx playwright test     # with both apps running: docs/e2e-testing.md
+```
 
-## Learn More
+ESLint runs Next's full rule set with nothing switched off.
 
-To learn more about Next.js, take a look at the following resources:
+## Where things are
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Folder | What |
+| --- | --- |
+| `app/` | Routes: `/` (storefront), `(auth)/` (sign-in, reset), `dashboard/` |
+| `components/` | `auth/` (session providers, sign-in pieces), `brand/`, `common/`, `dashboard/` (layout, table, filters, export, forms) |
+| `contexts/`, `hooks/`, `lib/` | Session, theme, sidebar; list params, resets, permissions; route access, formatting, API errors |
+| `services/` | One file per API area, typed to the Laravel resources (`services/types/`) |
+| `e2e/` | Playwright specs |
+| `proxy.ts` | Page access before render (Next 16's name for middleware) |
