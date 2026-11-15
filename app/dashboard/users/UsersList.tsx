@@ -129,7 +129,7 @@ export default function UsersList() {
         headerContent={
           <div className="flex flex-wrap items-center gap-2">
             <form onSubmit={(e) => { e.preventDefault(); setFilters({ search: searchInput.trim() }); }} className="flex">
-              <InputText value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Name, email, phone or account number" className="w-56 rounded-r-none! text-sm" />
+              <InputText value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Name, email, phone or username" className="w-56 rounded-r-none! text-sm" />
               <Button type="submit" icon="pi pi-search" severity="secondary" outlined className="rounded-l-none!" aria-label="Search" />
             </form>
             <FiltersButton groups={filterGroups} values={filterValuesFrom(filterGroups, getParam)} onApply={setFilters} />
