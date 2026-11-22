@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 import type { AxiosError } from "axios";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { SelectButton } from "primereact/selectbutton";
 import type { DataTablePageEvent, DataTableSortEvent } from "primereact/datatable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import PrimeReactDataTable from "@/components/dashboard/tables/PrimeReactDataTable";
+import PrimeReactDataTable, { viewAction } from "@/components/dashboard/tables/PrimeReactDataTable";
+import { RecordDetailsDialog } from "@/components/dashboard/audit";
 import FiltersButton, { filterValuesFrom, type FilterGroup } from "@/components/dashboard/filters/FiltersButton";
 import { optionsOf } from "@/components/dashboard/filters/pickers";
 import { Field, PageHeader, StatusTag } from "@/components/dashboard/ui";
@@ -24,10 +25,11 @@ import { dateTime } from "@/lib/format";
 import type { ApiErrorBody } from "@/lib/validation";
 import { addRequestedCategory, declineCategoryRequest, getCategories, getCategoryRequests } from "@/services/catalogue/catalogue-service";
 import { CATEGORY_REQUEST_STATUSES, LIMITS, type CategoryRequest } from "@/services/types/catalogue";
+import { confirmSubmit } from "@/components/dashboard/ConfirmAction";
 
 /**
- * Shops asking for a category the tree lacks (D32). Waiting ones open first; answer each with a new
- * category, one that already fits, or a reason. Whoever asked is told either way.
+ * Shops asking for a category the tree lacks (D32), newest first; filter to Pending to work the queue. Answer
+ * each with a new category, one that already fits, or a reason. Whoever asked is told either way.
  */
 export default function CategoryRequestsList() {
   const toast = usePrimeReactToast();
@@ -37,11 +39,12 @@ export default function CategoryRequestsList() {
   useResetWhen(search, () => setSearchInput(search));
   const [adding, setAdding] = useState<CategoryRequest | null>(null);
   const [declining, setDeclining] = useState<CategoryRequest | null>(null);
-  // Waiting ones unless the person chose otherwise ("all" clears it).
-  const shownStatus = status === "all" ? undefined : status || "Pending";
+  const [viewing, setViewing] = useState<CategoryRequest | null>(null);
+  // No hidden default filter (coding notes): every request shows, newest first; Pending is a chip away.
+  const shownStatus = status || undefined;
 
   const filterGroups: FilterGroup[] = [
-    { title: "Request", fields: [{ type: "select", key: "status", label: "Status", options: [...optionsOf(CATEGORY_REQUEST_STATUSES), { label: "Any status", value: "all" }], placeholder: "Pending" }] },
+    { title: "Request", fields: [{ type: "select", key: "status", label: "Status", options: optionsOf(CATEGORY_REQUEST_STATUSES), placeholder: "Any status" }] },
   ];
   const filters = { "filter[search]": search || undefined, "filter[status]": shownStatus, sort: sort || undefined };
   const query = useQuery({
@@ -84,7 +87,7 @@ export default function CategoryRequestsList() {
         data={query.data?.data ?? []}
         columns={columns}
         loading={query.isPending || query.isPlaceholderData}
-        emptyMessage={shownStatus === "Pending" ? "Nothing waiting. Every request is answered." : "No requests match."}
+        emptyMessage={shownStatus === "Pending" ? "Nothing waiting. Every request is answered." : search || shownStatus ? "No requests match." : "No shop has asked for a category yet."}
         fileName={`${APP_NAME} category requests`}
         headerContent={
           <div className="flex flex-wrap items-center gap-2">
@@ -98,9 +101,34 @@ export default function CategoryRequestsList() {
         pagination={{ total: query.data?.meta.total ?? 0, rows: pageSize, first, onPageChange: (e: DataTablePageEvent) => pushParams({ page: (e.page ?? 0) + 1, pageSize: e.rows }) }}
         sort={{ field: sortField, order: sortOrder, onSort: (e: DataTableSortEvent) => pushParams({ sort: columnSortToParam(e.sortField, e.sortOrder), page: DEFAULT_PAGE }) }}
         rowActions={[
+          viewAction<CategoryRequest>((r) => setViewing(r)),
           { key: "add", icon: <span className="pi pi-check" aria-hidden />, tooltip: "Add it", severity: "success", hidden: (r) => r.status !== "Pending", onClick: (r) => setAdding(r) },
           { key: "decline", icon: <span className="pi pi-times" aria-hidden />, tooltip: "Decline", severity: "danger", hidden: (r) => r.status !== "Pending", onClick: (r) => setDeclining(r) },
         ]}
+      />
+      <RecordDetailsDialog
+        header={viewing ? `"${viewing.name}"` : ""}
+        visible={!!viewing}
+        onHide={() => setViewing(null)}
+        record={viewing}
+        fields={viewing ? [
+          { label: "Asked for", value: viewing.name },
+          { label: "Status", value: <StatusTag status={viewing.status} raw /> },
+          { label: "Shop", value: viewing.shop?.name },
+          { label: "Asked by", value: viewing.created_by?.name },
+          { label: "Where it belongs", value: viewing.parent?.path ?? "Not said", wide: true },
+          { label: "What they sell", value: viewing.note || "Not said", wide: true },
+          { label: "Answered with", value: viewing.category?.path ?? (viewing.status === "Pending" ? "Not yet" : "No category"), wide: true },
+          { label: "Note to the shop", value: viewing.answer || "None", wide: true },
+          { label: "Decided", value: viewing.decided_at ? `${dateTime(viewing.decided_at)}${viewing.decided_by ? ` by ${viewing.decided_by.name}` : ""}` : "Not yet" },
+        ] : []}
+        footer={viewing && (
+          <div className="flex justify-end gap-2">
+            <Button label="Close" text onClick={() => setViewing(null)} />
+            {viewing.status === "Pending" && <Button label="Decline" icon="pi pi-times" outlined severity="danger" onClick={() => { setDeclining(viewing); setViewing(null); }} />}
+            {viewing.status === "Pending" && <Button label="Add it" icon="pi pi-check" onClick={() => { setAdding(viewing); setViewing(null); }} />}
+          </div>
+        )}
       />
       <AddCategoryDialog request={adding} onHide={() => setAdding(null)} />
       <ReasonDialog
@@ -159,7 +187,7 @@ function AddCategoryDialog({ request, onHide }: { request: CategoryRequest | nul
     setError(null);
     if (mode === "existing" && !existingId) return setError("Choose the category that fits.");
     if (mode === "new" && name.trim().length < 2) return setError("Enter the category's name.");
-    save.mutate();
+    confirmSubmit(mode === "existing" ? "this answer" : "this category", () => save.mutateAsync());
   };
 
   const categories = tree.data ?? [];

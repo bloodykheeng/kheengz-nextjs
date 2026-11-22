@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
@@ -12,6 +12,8 @@ import { fetchAllPaginated } from "@/lib/fetchAllPaginated";
 import { getCategory, getProductAttributes, setCategoryAttributes } from "@/services/catalogue/catalogue-service";
 import type { Category, ProductAttribute } from "@/services/types/catalogue";
 import type { Paginated } from "@/services/types/kheengz";
+import { Bar } from "@/components/dashboard/RecordSkeleton";
+import { confirmSubmit } from "@/components/dashboard/ConfirmAction";
 
 type Row = { id: string; name: string; input_type: string; unit: string | null; is_required: boolean };
 
@@ -68,7 +70,7 @@ export default function CategoryAttributesDialog({ category, onHide }: { categor
   return (
     <Dialog header={category ? `Attributes of ${category.name}` : ""} visible={visible} onHide={onHide} style={{ width: "min(36rem, 95vw)" }} closable={!save.isPending}>
       {detail.isPending ? (
-        <div className="h-40 animate-pulse rounded-xl bg-(--border-color)/40" role="status" aria-label="Loading" />
+        <div className="space-y-3" role="status" aria-label="Loading"><Bar w="w-48" h="h-3" /><Bar w="w-full" h="h-12" className="rounded-xl" /><Bar w="w-full" h="h-12" className="rounded-xl" /><Bar w="w-full" h="h-11" className="rounded-lg" /></div>
       ) : (
         <div className="space-y-5">
           {inherited.length > 0 && (
@@ -122,7 +124,7 @@ export default function CategoryAttributesDialog({ category, onHide }: { categor
           </section>
           <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
             <Button type="button" text label="Cancel" onClick={onHide} disabled={save.isPending} />
-            <Button type="button" icon="pi pi-check" label="Save" loading={save.isPending} onClick={() => save.mutate()} />
+            <Button type="button" icon="pi pi-check" label="Save" loading={save.isPending} onClick={() => confirmSubmit(`the attributes of ${category?.name ?? "this category"}`, () => save.mutateAsync())} />
           </div>
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { InputText } from "primereact/inputtext";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +16,7 @@ import { ugandanLocal } from "@/lib/phone";
 import { applyServerErrors, phone, requiredText } from "@/lib/validation";
 import { updateVendor } from "@/services/vendors/vendors-service";
 import type { Vendor } from "@/services/types/kheengz";
+import { confirmSubmit, guardedClose } from "@/components/dashboard/ConfirmAction";
 
 /**
  * A vendor's details. The Owner edits the contact details any time; the identity the Admin checks
@@ -62,7 +63,7 @@ function DetailsDialog({ vendor, visible, onHide }: { vendor: Vendor; visible: b
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
   const identityOpen = vendor.status === "Pending" || vendor.status === "Rejected";
-  const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
+  const { control, handleSubmit, reset, setError, formState: { errors , isDirty } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "", registration_number: "", phone: "", email: "", address: "" } });
 
   useResetOnOpen(visible, vendor.id, () => setFormError(null));
   useEffect(() => {
@@ -86,9 +87,11 @@ function DetailsDialog({ vendor, visible, onHide }: { vendor: Vendor; visible: b
     onError: (error) => setFormError(applyServerErrors(error, setError, ["name", "registration_number", "phone", "email", "address"])),
   });
 
+  const close = guardedClose(isDirty, save.isPending, onHide);
+
   return (
-    <Dialog header="Edit details" visible={visible} onHide={onHide} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
-      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); save.mutate(v); })}>
+    <Dialog header="Edit details" visible={visible} onHide={close} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
+      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); confirmSubmit("these business details", () => save.mutateAsync(v)); })}>
         <Field label="Business name" required error={errors.name?.message} hint={identityOpen ? undefined : "Checked when you were approved. Contact support to change it."}>
           <Controller control={control} name="name" render={({ field }) => <InputText {...field} disabled={!identityOpen} className="w-full" invalid={!!errors.name} />} />
         </Field>
@@ -108,7 +111,7 @@ function DetailsDialog({ vendor, visible, onHide }: { vendor: Vendor; visible: b
         </Field>
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
         <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
-          <Button type="button" text label="Cancel" onClick={onHide} disabled={save.isPending} />
+          <Button type="button" text label="Cancel" onClick={close} disabled={save.isPending} />
           <Button type="submit" icon="pi pi-check" label="Save" loading={save.isPending} />
         </div>
       </form>

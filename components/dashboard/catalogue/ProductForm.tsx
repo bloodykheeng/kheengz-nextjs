@@ -27,6 +27,7 @@ import { ALWAYS, requiredText, type ApiErrorBody } from "@/lib/validation";
 import { getCategories, getCategory, getShopSections, getUnits } from "@/services/catalogue/catalogue-service";
 import { LIMITS, type Product, type ProductAttribute, type ProductPayload, type Unit } from "@/services/types/catalogue";
 import type { Shop } from "@/services/types/kheengz";
+import { Bar } from "@/components/dashboard/RecordSkeleton";
 
 const money = (label: string) => z.number({ error: label }).nullable();
 
@@ -263,7 +264,7 @@ export default function ProductForm({ shop, product, saving, onSubmit, aside, re
           {categoryId && (
             <Card title="Details buyers filter by">
               {category.isPending ? (
-                <div className="h-20 animate-pulse rounded-lg bg-(--border-color)/40" role="status" aria-label="Loading" />
+                <div className="grid gap-4 sm:grid-cols-2" role="status" aria-label="Loading">{[0, 1].map((i) => <div key={i} className="space-y-2"><Bar w="w-24" h="h-3" /><Bar w="w-full" h="h-11" className="rounded-lg" /></div>)}</div>
               ) : attributes.length === 0 ? (
                 <p className="text-sm text-(--text-muted)">This category has no details to fill in.</p>
               ) : (

@@ -16,6 +16,7 @@ import { useListParams } from "@/hooks/useListParams";
 import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { getVendor, getVendors, resubmitVendor } from "@/services/vendors/vendors-service";
 import type { Vendor } from "@/services/types/kheengz";
+import { VendorRecordSkeleton } from "@/components/dashboard/RecordSkeleton";
 
 /**
  * A vendor's own business (D31, D35): where the application stands and what is still needed, the
@@ -28,7 +29,7 @@ export default function VendorHome() {
   const list = vendors.data?.data ?? [];
   const chosenId = getParam("vendor") || list[0]?.id;
 
-  if (vendors.isPending) return <div className="h-64 animate-pulse rounded-2xl bg-(--bg-card)" role="status" aria-label="Loading" />;
+  if (vendors.isPending) return <VendorRecordSkeleton />;
   if (list.length === 0) {
     return (
       <EmptyState
@@ -55,7 +56,7 @@ function VendorWorkspace({ vendorId }: { vendorId: string }) {
   const [opening, setOpening] = useState(false);
   const vendor = query.data;
 
-  if (query.isPending || !vendor) return <div className="h-64 animate-pulse rounded-2xl bg-(--bg-card)" role="status" aria-label="Loading" />;
+  if (query.isPending || !vendor) return <VendorRecordSkeleton />;
 
   const isOwner = vendor.my_role === "Owner";
   const mode = isOwner ? "owner" : "member";

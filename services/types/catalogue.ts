@@ -63,7 +63,7 @@ export interface Category {
   updated_at?: string | null;
 }
 
-export interface Unit {
+export interface Unit extends Audited {
   id: string;
   name: string;
   plural: string;

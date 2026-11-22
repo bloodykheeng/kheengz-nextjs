@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { Controller, useForm } from "react-hook-form";
@@ -16,6 +16,7 @@ import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { applyServerErrors, requiredText } from "@/lib/validation";
 import { createCategory, updateCategory } from "@/services/catalogue/catalogue-service";
 import { LIMITS, type Category } from "@/services/types/catalogue";
+import { confirmSubmit, guardedClose } from "@/components/dashboard/ConfirmAction";
 
 /** Icons a top category can show (PrimeIcons), with the words people search for. */
 export const CATEGORY_ICONS = [
@@ -57,7 +58,7 @@ export default function CategoryDialog({ visible, onHide, categories, category, 
   const toast = usePrimeReactToast();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
-  const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
+  const { control, handleSubmit, reset, setError, formState: { errors , isDirty } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "", parent_id: null, icon: null } });
 
   useResetOnOpen(visible, category?.id ?? parent?.id ?? "new", () => setFormError(null));
   useEffect(() => {
@@ -79,9 +80,11 @@ export default function CategoryDialog({ visible, onHide, categories, category, 
     onError: (error) => setFormError(applyServerErrors(error, setError, ["name", "parent_id", "icon"])),
   });
 
+  const close = guardedClose(isDirty, save.isPending, onHide);
+
   return (
-    <Dialog header={category ? `Edit ${category.name}` : parent ? `Add inside ${parent.name}` : "Add a category"} visible={visible} onHide={onHide} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
-      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); save.mutate(v); })}>
+    <Dialog header={category ? `Edit ${category.name}` : parent ? `Add inside ${parent.name}` : "Add a category"} visible={visible} onHide={close} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
+      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); confirmSubmit("this category", () => save.mutateAsync(v)); })}>
         <Field label="Name" required error={errors.name?.message} hint="What buyers look for, like Basins or Iron sheets.">
           <Controller control={control} name="name" render={({ field }) => <InputText {...field} className="w-full" invalid={!!errors.name} autoFocus />} />
         </Field>
@@ -114,7 +117,7 @@ export default function CategoryDialog({ visible, onHide, categories, category, 
         </Field>
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
         <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
-          <Button type="button" text label="Cancel" onClick={onHide} disabled={save.isPending} />
+          <Button type="button" text label="Cancel" onClick={close} disabled={save.isPending} />
           <Button type="submit" icon="pi pi-check" label="Save" loading={save.isPending} />
         </div>
       </form>

@@ -2,18 +2,19 @@
 
 import React, { useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { InputText } from "primereact/inputtext";
 import type { AxiosError } from "axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EmptyState } from "@/components/dashboard/ui";
-import { confirmAction } from "@/components/dashboard/ConfirmAction";
+import { confirmAction, confirmSubmit } from "@/components/dashboard/ConfirmAction";
 import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { useResetOnOpen } from "@/hooks/useResetOnOpen";
 import { plural } from "@/lib/plural";
 import type { ApiErrorBody } from "@/lib/validation";
 import { createShopSection, deleteShopSection, getShopSections, reorderShopSections, updateShopSection } from "@/services/catalogue/catalogue-service";
 import { LIMITS, type ShopSection } from "@/services/types/catalogue";
+import { Bar } from "@/components/dashboard/RecordSkeleton";
 
 const firstError = (e: AxiosError<ApiErrorBody>) => {
   const errors = e.response?.data?.errors;
@@ -84,14 +85,14 @@ export default function SectionsDialog({ shopId, visible, onHide }: { shopId: st
           e.preventDefault();
           setError(null);
           if (name.trim().length < 2) return setError("Name the section, like Back to school.");
-          add.mutate();
+          confirmSubmit("this section", () => add.mutateAsync());
         }}>
           <InputText value={name} onChange={(e) => setName(e.target.value)} placeholder="Back to school" aria-label="New section name" className="min-w-0 flex-1" disabled={list.length >= LIMITS.sections} />
           <Button type="submit" icon="pi pi-plus" label="Add" loading={add.isPending} disabled={list.length >= LIMITS.sections} />
         </form>
         {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
         {sections.isPending ? (
-          <div className="h-24 animate-pulse rounded-xl bg-(--border-color)/40" role="status" aria-label="Loading" />
+          <ul className="space-y-3 rounded-xl border border-(--border-color) p-3" role="status" aria-label="Loading">{[0, 1, 2].map((i) => <li key={i} className="space-y-1.5"><Bar w="w-40" /><Bar w="w-20" h="h-3" /></li>)}</ul>
         ) : list.length === 0 ? (
           <EmptyState icon="pi-th-large" title="No sections yet" body="Add one above, like Wedding sets or Under 10k." />
         ) : (
@@ -99,7 +100,7 @@ export default function SectionsDialog({ shopId, visible, onHide }: { shopId: st
             {list.map((s, i) => (
               <li key={s.id} className="flex items-center gap-2 px-3 py-2">
                 {renaming?.id === s.id ? (
-                  <form className="flex flex-1 gap-2" onSubmit={(e) => { e.preventDefault(); setError(null); rename.mutate(renaming); }}>
+                  <form className="flex flex-1 gap-2" onSubmit={(e) => { e.preventDefault(); setError(null); confirmSubmit("the new name", () => rename.mutateAsync(renaming)); }}>
                     <InputText value={renaming.name} onChange={(e) => setRenaming({ id: s.id, name: e.target.value })} className="min-w-0 flex-1" aria-label={`New name for ${s.name}`} autoFocus />
                     <Button type="submit" size="small" icon="pi pi-check" aria-label="Save name" loading={rename.isPending} />
                     <Button type="button" size="small" text icon="pi pi-times" aria-label="Cancel" onClick={() => setRenaming(null)} />

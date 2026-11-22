@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
@@ -15,6 +15,8 @@ import { useResetOnOpen } from "@/hooks/useResetOnOpen";
 import type { ApiErrorBody } from "@/lib/validation";
 import { getStockCard, recordStock } from "@/services/catalogue/catalogue-service";
 import type { ManualStockReason } from "@/services/types/catalogue";
+import { Bar } from "@/components/dashboard/RecordSkeleton";
+import { confirmSubmit } from "@/components/dashboard/ConfirmAction";
 
 const REASONS: { label: string; value: ManualStockReason; hint: string }[] = [
   { label: "Received", value: "Received", hint: "New stock came in. It is added." },
@@ -90,7 +92,7 @@ export default function RecordStockDialog({ productId, visible, onHide, variantI
     if (!locationValue) return setError("Choose the location.");
     if (quantity === null || (reason !== "Counted" && quantity <= 0)) return setError(reason === "Counted" ? "Enter what you counted." : "Enter how many.");
     if (reason === "Moved" && !to) return setError("Choose where it is moving to.");
-    save.mutate();
+    confirmSubmit("this stock change", () => save.mutateAsync());
   };
 
   const unit = chosen?.unit;
@@ -99,7 +101,7 @@ export default function RecordStockDialog({ productId, visible, onHide, variantI
   return (
     <Dialog header="Record stock" visible={visible} onHide={onHide} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
       {card.isPending ? (
-        <div className="h-48 animate-pulse rounded-xl bg-(--border-color)/40" role="status" aria-label="Loading" />
+        <div className="space-y-4" role="status" aria-label="Loading"><Bar w="w-full" h="h-11" className="rounded-lg" />{[0, 1, 2].map((i) => <div key={i} className="space-y-2"><Bar w="w-28" h="h-3" /><Bar w="w-full" h="h-11" className="rounded-lg" /></div>)}</div>
       ) : counted.length === 0 ? (
         <p className="text-sm text-(--text-muted)">No variant of this product counts its stock. Switch on &quot;Count stock&quot; on a variant first.</p>
       ) : (

@@ -8,7 +8,8 @@ import { InputText } from "primereact/inputtext";
 import { SelectButton } from "primereact/selectbutton";
 import type { DataTablePageEvent, DataTableSortEvent } from "primereact/datatable";
 import { useQuery } from "@tanstack/react-query";
-import PrimeReactDataTable from "@/components/dashboard/tables/PrimeReactDataTable";
+import PrimeReactDataTable, { viewAction } from "@/components/dashboard/tables/PrimeReactDataTable";
+import { useAppRouter } from "@/hooks/useAppRouter";
 import { PageHeader } from "@/components/dashboard/ui";
 import RecordStockDialog from "@/components/dashboard/catalogue/RecordStockDialog";
 import { useBreadcrumbTitle } from "@/contexts/BreadcrumbContext";
@@ -30,6 +31,7 @@ const STATES = [{ label: "All", value: "" }, { label: "Running low", value: "low
 export default function ShopStock() {
   const { id } = useParams<{ id: string }>();
   const { can } = usePermissions();
+  const router = useAppRouter();
   const shop = useQuery({ queryKey: ["shop", id], queryFn: () => getShop(id) });
   useBreadcrumbTitle(shop.data?.name);
   const { page, pageSize, search, sort, sortField, sortOrder, first, getParam, pushParams, setFilters } = useListParams();
@@ -58,10 +60,10 @@ export default function ShopStock() {
 
   const columns = [
     { field: "product", header: "Product", body: (r: ShopStockRow) => (
-      <Link href={`/dashboard/products/${r.product_id}`} className="block hover:text-(--brand-ink)">
+      <span>
         <span className="block font-medium">{name(r)}</span>
         <span className="block text-xs text-(--text-muted)">{r.sku ? `SKU ${r.sku}` : ""}{r.is_active ? "" : " · not offered"}</span>
-      </Link>
+      </span>
     ) },
     { field: "available", header: "Free", sortable: true, body: (r: ShopStockRow) => {
       const out = r.available <= 0;
@@ -100,7 +102,10 @@ export default function ShopStock() {
         }
         pagination={{ total: query.data?.meta.total ?? 0, rows: pageSize, first, onPageChange: (e: DataTablePageEvent) => pushParams({ page: (e.page ?? 0) + 1, pageSize: e.rows }) }}
         sort={{ field: sortField, order: sortOrder, onSort: (e: DataTableSortEvent) => pushParams({ sort: columnSortToParam(e.sortField, e.sortOrder), page: DEFAULT_PAGE }) }}
-        rowActions={editable ? [{ key: "record", icon: <span className="pi pi-plus" aria-hidden />, tooltip: "Record stock", onClick: (r: ShopStockRow) => setRecording(r) }] : []}
+        rowActions={[
+          viewAction<ShopStockRow>((r) => router.push(`/dashboard/products/${r.product_id}`), { tooltip: "Open the product" }),
+          ...(editable ? [{ key: "record", icon: <span className="pi pi-plus" aria-hidden />, tooltip: "Record stock", onClick: (r: ShopStockRow) => setRecording(r) }] : []),
+        ]}
       />
       {recording && <RecordStockDialog productId={recording.product_id} variantId={recording.id} visible={!!recording} onHide={() => setRecording(null)} />}
     </div>

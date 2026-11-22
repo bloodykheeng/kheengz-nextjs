@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, EmptyState, Field, PageHeader, StatusTag } from "@/components/dashboard/ui";
-import { confirmAction } from "@/components/dashboard/ConfirmAction";
+import { confirmAction, confirmSubmit, guardedClose } from "@/components/dashboard/ConfirmAction";
 import PhoneField from "@/components/dashboard/forms/PhoneField";
 import { ReasonDialog } from "@/components/dashboard/vendors/PayoutDestinationsCard";
 import { useBreadcrumbTitle } from "@/contexts/BreadcrumbContext";
@@ -34,6 +34,7 @@ import {
   type ShopAction,
 } from "@/services/vendors/vendors-service";
 import type { Shop, ShopLocation, Vendor } from "@/services/types/kheengz";
+import { ShopRecordSkeleton } from "@/components/dashboard/RecordSkeleton";
 
 const EDITABLE = new Set(["Draft", "Changes requested", "Active"]);
 
@@ -51,7 +52,7 @@ export default function ShopWorkspace() {
   useBreadcrumbTitle(shop?.name);
 
   if (shopQuery.isPending || vendorQuery.isPending || !shop || !vendorQuery.data) {
-    return <div className="h-64 animate-pulse rounded-2xl bg-(--bg-card)" role="status" aria-label="Loading" />;
+    return <ShopRecordSkeleton />;
   }
 
   const vendor = vendorQuery.data;
@@ -154,7 +155,7 @@ function ShopDetailsCard({ shop, editable }: { shop: Shop; editable: boolean }) 
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<DetailsValues>({ resolver: zodResolver(detailsSchema) });
+  const { control, handleSubmit, reset, setError, formState: { errors , isDirty } } = useForm<DetailsValues>({ resolver: zodResolver(detailsSchema), defaultValues: { description: "", phone: "", email: "" } });
   useResetOnOpen(editing, shop.id, () => setFormError(null));
   useEffect(() => {
     if (editing) reset({ description: shop.description ?? "", phone: shop.phone, email: shop.email ?? "" });
@@ -180,6 +181,8 @@ function ShopDetailsCard({ shop, editable }: { shop: Shop; editable: boolean }) 
     ["Opened", shop.approved_at ? dateTime(shop.approved_at) : "Not yet"],
   ];
 
+  const closeDetails = guardedClose(isDirty, save.isPending, () => setEditing(false));
+
   return (
     <Card title="Details" actions={editable ? <Button size="small" outlined icon="pi pi-pencil" label="Edit" onClick={() => setEditing(true)} /> : undefined}>
       <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -191,8 +194,8 @@ function ShopDetailsCard({ shop, editable }: { shop: Shop; editable: boolean }) 
         ))}
       </dl>
       {shop.approved_at && <p className="mt-4 text-xs text-(--text-muted)">The name, web address and type were approved with the shop, so they stay. Contact support to change them.</p>}
-      <Dialog header="Edit shop details" visible={editing} onHide={() => setEditing(false)} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
-        <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); save.mutate(v); })}>
+      <Dialog header="Edit shop details" visible={editing} onHide={closeDetails} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
+        <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); confirmSubmit("the shop's details", () => save.mutateAsync(v)); })}>
           <Field label="Description" error={errors.description?.message}>
             <Controller control={control} name="description" render={({ field }) => <InputTextarea {...field} rows={3} autoResize className="w-full" />} />
           </Field>
@@ -204,7 +207,7 @@ function ShopDetailsCard({ shop, editable }: { shop: Shop; editable: boolean }) 
           </Field>
           {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
           <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
-            <Button type="button" text label="Cancel" onClick={() => setEditing(false)} disabled={save.isPending} />
+            <Button type="button" text label="Cancel" onClick={closeDetails} disabled={save.isPending} />
             <Button type="submit" icon="pi pi-check" label="Save" loading={save.isPending} />
           </div>
         </form>
@@ -269,7 +272,7 @@ function LocationsCard({ shop, editable }: { shop: Shop; editable: boolean }) {
   const [formError, setFormError] = useState<string | null>(null);
   const locations = shop.locations ?? [];
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["shop", shop.id] });
-  const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<LocationValues>({ resolver: zodResolver(locationSchema) });
+  const { control, handleSubmit, reset, setError, formState: { errors , isDirty } } = useForm<LocationValues>({ resolver: zodResolver(locationSchema), defaultValues: { name: "", address: "", area: "", opening_hours: "" } });
   const visible = !!editing;
   useResetOnOpen(visible, editing?.location?.id ?? "new", () => setFormError(null));
   useEffect(() => {
@@ -306,6 +309,8 @@ function LocationsCard({ shop, editable }: { shop: Shop; editable: boolean }) {
     },
   });
 
+  const closeLocation = guardedClose(isDirty, save.isPending, () => setEditing(null));
+
   return (
     <Card title="Locations" actions={editable ? <Button size="small" icon="pi pi-plus" label="Add" onClick={() => setEditing({ location: null })} /> : undefined}>
       {locations.length === 0 ? (
@@ -334,8 +339,8 @@ function LocationsCard({ shop, editable }: { shop: Shop; editable: boolean }) {
           ))}
         </ul>
       )}
-      <Dialog header={editing?.location ? `Edit ${editing.location.name}` : "Add a location"} visible={visible} onHide={() => setEditing(null)} style={{ width: "min(30rem, 95vw)" }} closable={!save.isPending}>
-        <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); save.mutate(v); })}>
+      <Dialog header={editing?.location ? `Edit ${editing.location.name}` : "Add a location"} visible={visible} onHide={closeLocation} style={{ width: "min(30rem, 95vw)" }} closable={!save.isPending}>
+        <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); confirmSubmit("this location", () => save.mutateAsync(v)); })}>
           <Field label="Name" required error={errors.name?.message}>
             <Controller control={control} name="name" render={({ field }) => <InputText {...field} className="w-full" placeholder="Store room" invalid={!!errors.name} />} />
           </Field>
@@ -350,7 +355,7 @@ function LocationsCard({ shop, editable }: { shop: Shop; editable: boolean }) {
           </Field>
           {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
           <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
-            <Button type="button" text label="Cancel" onClick={() => setEditing(null)} disabled={save.isPending} />
+            <Button type="button" text label="Cancel" onClick={closeLocation} disabled={save.isPending} />
             <Button type="submit" icon="pi pi-check" label="Save" loading={save.isPending} />
           </div>
         </form>

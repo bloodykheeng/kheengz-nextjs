@@ -5,7 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
@@ -16,6 +16,7 @@ import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { createUser, updateUser, type User } from "@/services/users/users-service";
 import { applyServerErrors, email, phone, requiredText } from "@/lib/validation";
 import { useResetOnOpen } from "@/hooks/useResetOnOpen";
+import { confirmSubmit, guardedClose } from "@/components/dashboard/ConfirmAction";
 
 /** Account roles (D26). A vendor's own staff (Owner, Staff) are places in a shop, set there, never here. */
 export const ROLES = [
@@ -44,7 +45,7 @@ export default function UserFormDialog({ user, visible, onHide }: { user: User |
   const toast = usePrimeReactToast();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
-  const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
+  const { control, handleSubmit, reset, setError, formState: { errors , isDirty } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "", email: "", phone: "", role: "Staff", status: "Active", password: "" } });
 
   // A fresh start each time it opens, before the paint.
   useResetOnOpen(visible, user?.id ?? "new", () => setFormError(null));
@@ -73,9 +74,11 @@ export default function UserFormDialog({ user, visible, onHide }: { user: User |
     onError: (error) => setFormError(applyServerErrors(error, setError, FIELDS)),
   });
 
+  const close = guardedClose(isDirty, save.isPending, onHide);
+
   return (
-    <Dialog maximizable header={user ? "Edit account" : "New account"} visible={visible} onHide={onHide} style={{ width: "min(34rem, 95vw)" }} closable={!save.isPending}>
-      <form className="space-y-4" noValidate autoComplete="off" onSubmit={handleSubmit((v) => { setFormError(null); save.mutate(v); })}>
+    <Dialog maximizable header={user ? "Edit account" : "New account"} visible={visible} onHide={close} style={{ width: "min(34rem, 95vw)" }} closable={!save.isPending}>
+      <form className="space-y-4" noValidate autoComplete="off" onSubmit={handleSubmit((v) => { setFormError(null); confirmSubmit("this account", () => save.mutateAsync(v)); })}>
         <Field label="Name" required error={errors.name?.message}>
           <Controller control={control} name="name" render={({ field }) => <InputText {...field} className="w-full" placeholder="Enter the full name" invalid={!!errors.name} />} />
         </Field>
@@ -106,7 +109,7 @@ export default function UserFormDialog({ user, visible, onHide }: { user: User |
         </Field>
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
         <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
-          <Button type="button" text label="Cancel" onClick={onHide} disabled={save.isPending} />
+          <Button type="button" text label="Cancel" onClick={close} disabled={save.isPending} />
           <Button type="submit" icon="pi pi-check" label="Save" loading={save.isPending} />
         </div>
       </form>

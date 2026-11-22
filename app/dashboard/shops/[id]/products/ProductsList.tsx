@@ -8,7 +8,7 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import type { DataTablePageEvent, DataTableSortEvent } from "primereact/datatable";
 import { useQuery } from "@tanstack/react-query";
-import PrimeReactDataTable, { viewAction } from "@/components/dashboard/tables/PrimeReactDataTable";
+import PrimeReactDataTable, { createAction, viewAction } from "@/components/dashboard/tables/PrimeReactDataTable";
 import FiltersButton, { filterValuesFrom, type FilterGroup } from "@/components/dashboard/filters/FiltersButton";
 import { optionsOf } from "@/components/dashboard/filters/pickers";
 import { PageHeader, StatusTag } from "@/components/dashboard/ui";
@@ -78,7 +78,7 @@ export default function ProductsList() {
       header: "Product",
       sortable: true,
       body: (p: Product) => (
-        <Link href={`/dashboard/products/${p.id}`} className="flex items-center gap-3 hover:text-(--brand-ink)">
+        <span className="flex items-center gap-3">
           <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-(--border-color) bg-white">
             {p.cover ? <Image src={p.cover.thumb_url} alt="" fill sizes="48px" className="object-contain" unoptimized={!isStoredPhoto(p.cover.thumb_url)} />
               : <span className="pi pi-image absolute inset-0 m-auto h-fit w-fit text-(--text-muted)" aria-hidden />}
@@ -87,7 +87,7 @@ export default function ProductsList() {
             <span className="block font-medium">{p.name}</span>
             <span className="block truncate text-xs text-(--text-muted)">{p.category?.path}</span>
           </span>
-        </Link>
+        </span>
       ),
     },
     { field: "price", header: "Price", body: (p: Product) => <span className="text-sm">{priceRange(p)}<span className="block text-xs text-(--text-muted)">{p.variants_count} variant{p.variants_count === 1 ? "" : "s"}</span></span> },
@@ -109,7 +109,6 @@ export default function ProductsList() {
           <>
             <Button outlined icon="pi pi-chart-bar" label="Stock" onClick={() => router.push(`/dashboard/shops/${id}/stock`)} />
             <Button outlined icon="pi pi-th-large" label="Sections" onClick={() => setManaging(true)} />
-            <Button icon="pi pi-plus" label="Add product" onClick={() => router.push(`/dashboard/shops/${id}/products/new`)} />
           </>
         ) : undefined}
       />
@@ -132,6 +131,7 @@ export default function ProductsList() {
         pagination={{ total: query.data?.meta.total ?? 0, rows: pageSize, first, onPageChange: (e: DataTablePageEvent) => pushParams({ page: (e.page ?? 0) + 1, pageSize: e.rows }) }}
         sort={{ field: sortField, order: sortOrder, onSort: (e: DataTableSortEvent) => pushParams({ sort: columnSortToParam(e.sortField, e.sortOrder), page: DEFAULT_PAGE }) }}
         rowActions={[viewAction<Product>((p) => router.push(`/dashboard/products/${p.id}`))]}
+        toolbarActions={editable ? [{ ...createAction<Product>(() => router.push(`/dashboard/shops/${id}/products/new`)), label: "Add product" }] : []}
       />
       {editable && <SectionsDialog shopId={id} visible={managing} onHide={() => setManaging(false)} />}
     </div>

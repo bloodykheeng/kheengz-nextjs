@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { SelectButton } from "primereact/selectbutton";
@@ -11,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, EmptyState, Field, StatusTag } from "@/components/dashboard/ui";
-import { confirmAction } from "@/components/dashboard/ConfirmAction";
+import { confirmAction, confirmSubmit, guardedClose } from "@/components/dashboard/ConfirmAction";
 import { useResetOnOpen } from "@/hooks/useResetOnOpen";
 import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { guessNetwork } from "@/lib/format";
@@ -139,7 +139,7 @@ function AddDestinationDialog({ vendor, visible, onHide }: { vendor: Vendor; vis
   const toast = usePrimeReactToast();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
-  const { control, handleSubmit, reset, setError, setValue, formState: { errors } } = useForm<DestinationValues>({
+  const { control, handleSubmit, reset, setError, setValue, formState: { errors, isDirty } } = useForm<DestinationValues>({
     resolver: zodResolver(destinationSchema),
     defaultValues: { method: "Mobile Money", network: null, bank_name: null, account_number: "", account_name: "" },
   });
@@ -177,9 +177,11 @@ function AddDestinationDialog({ vendor, visible, onHide }: { vendor: Vendor; vis
     onError: (error) => setFormError(applyServerErrors(error, setError, ["method", "network", "bank_name", "account_number", "account_name"])),
   });
 
+  const close = guardedClose(isDirty, save.isPending, onHide);
+
   return (
-    <Dialog header="Add a payout destination" visible={visible} onHide={onHide} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
-      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); save.mutate(v); })}>
+    <Dialog header="Add a payout destination" visible={visible} onHide={close} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
+      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); confirmSubmit("this payout destination", () => save.mutateAsync(v)); })}>
         <Controller control={control} name="method" render={({ field }) => (
           <SelectButton value={field.value} options={["Mobile Money", "Bank"]} onChange={(e) => e.value && field.onChange(e.value)} className="w-full" allowEmpty={false} />
         )} />
@@ -210,7 +212,7 @@ function AddDestinationDialog({ vendor, visible, onHide }: { vendor: Vendor; vis
         <p className="text-xs text-(--text-muted)">We text your business phone whenever a payout destination is added.</p>
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
         <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
-          <Button type="button" text label="Cancel" onClick={onHide} disabled={save.isPending} />
+          <Button type="button" text label="Cancel" onClick={close} disabled={save.isPending} />
           <Button type="submit" icon="pi pi-check" label={method === "Bank" ? "Check and save" : "Save"} loading={save.isPending} />
         </div>
       </form>

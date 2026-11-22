@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "primereact/button";
 import { Chips } from "primereact/chips";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import type { DataTablePageEvent, DataTableSortEvent } from "primereact/datatable";
@@ -11,17 +11,19 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import PrimeReactDataTable, { editAction } from "@/components/dashboard/tables/PrimeReactDataTable";
+import PrimeReactDataTable, { createAction, deleteSelectedAction, editAction, viewAction } from "@/components/dashboard/tables/PrimeReactDataTable";
+import { RecordDetailsDialog } from "@/components/dashboard/audit";
 import FiltersButton, { filterValuesFrom, type FilterGroup } from "@/components/dashboard/filters/FiltersButton";
 import { optionsOf } from "@/components/dashboard/filters/pickers";
 import { Field, PageHeader } from "@/components/dashboard/ui";
-import { confirmAction } from "@/components/dashboard/ConfirmAction";
+import { confirmAction, confirmSubmit, guardedClose } from "@/components/dashboard/ConfirmAction";
 import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { useListParams, columnSortToParam, DEFAULT_PAGE } from "@/hooks/useListParams";
 import { useResetOnOpen, useResetWhen } from "@/hooks/useResetOnOpen";
+import { useTicked } from "@/hooks/useTicked";
 import { APP_NAME } from "@/lib/brand";
 import { ALWAYS, applyServerErrors, requiredText } from "@/lib/validation";
-import { createProductAttribute, deleteProductAttribute, getProductAttributes, updateProductAttribute } from "@/services/catalogue/catalogue-service";
+import { createProductAttribute, deleteProductAttributes, getProductAttributes, updateProductAttribute } from "@/services/catalogue/catalogue-service";
 import { ATTRIBUTE_INPUT_TYPES, type ProductAttribute } from "@/services/types/catalogue";
 
 /**
@@ -36,6 +38,7 @@ export default function AttributesList() {
   const [searchInput, setSearchInput] = useState(search);
   useResetWhen(search, () => setSearchInput(search));
   const [editing, setEditing] = useState<{ attribute: ProductAttribute | null } | null>(null);
+  const [viewing, setViewing] = useState<ProductAttribute | null>(null);
 
   const filterGroups: FilterGroup[] = [
     { title: "Attribute", fields: [{ type: "select", key: "input_type", label: "Filled in as", options: optionsOf(ATTRIBUTE_INPUT_TYPES), placeholder: "Any" }] },
@@ -46,22 +49,20 @@ export default function AttributesList() {
     queryFn: () => getProductAttributes({ ...filters, page, per_page: pageSize }),
     placeholderData: (previous) => previous,
   });
+  const rows = query.data?.data ?? [];
+  const [ticked, setTicked] = useTicked(rows, `${page}:${pageSize}:${search}:${inputType}:${sort}`);
 
   const remove = useMutation({
-    mutationFn: (a: ProductAttribute) => deleteProductAttribute(a.id),
+    mutationFn: (attributes: ProductAttribute[]) => deleteProductAttributes(attributes.map((a) => a.id)),
     onSuccess: async (response) => {
+      setTicked([]);
       await queryClient.invalidateQueries({ queryKey: ["product-attributes"] });
       toast.success(response.message);
     },
   });
 
   const columns = [
-    { field: "name", header: "Attribute", sortable: true, body: (a: ProductAttribute) => (
-      <span>
-        <span className="block font-medium">{a.name}</span>
-        {a.hint && <span className="block text-xs text-(--text-muted)">{a.hint}</span>}
-      </span>
-    ) },
+    { field: "name", header: "Attribute", sortable: true, body: (a: ProductAttribute) => <span className="font-medium">{a.name}</span> },
     { field: "input_type", header: "Filled in as", body: (a: ProductAttribute) => <span className="text-sm">{a.input_type}{a.unit ? ` (${a.unit})` : ""}</span> },
     { field: "options", header: "Choices", body: (a: ProductAttribute) => (
       <span className="text-sm text-(--text-secondary)">{a.input_type === "List" ? (a.options ?? []).map((o) => o.value).join(", ") : "Typed in"}</span>
@@ -74,10 +75,9 @@ export default function AttributesList() {
       <PageHeader
         title="Attributes"
         subtitle="What buyers filter by, like Colour, Capacity or Gauge. Give them to categories on the Categories page."
-        actions={<Button icon="pi pi-plus" label="Add attribute" onClick={() => setEditing({ attribute: null })} />}
       />
       <PrimeReactDataTable<ProductAttribute>
-        data={query.data?.data ?? []}
+        data={rows}
         columns={columns}
         loading={query.isPending || query.isPlaceholderData}
         emptyMessage="No attributes match."
@@ -93,16 +93,32 @@ export default function AttributesList() {
         }
         pagination={{ total: query.data?.meta.total ?? 0, rows: pageSize, first, onPageChange: (e: DataTablePageEvent) => pushParams({ page: (e.page ?? 0) + 1, pageSize: e.rows }) }}
         sort={{ field: sortField, order: sortOrder, onSort: (e: DataTableSortEvent) => pushParams({ sort: columnSortToParam(e.sortField, e.sortOrder), page: DEFAULT_PAGE }) }}
-        rowActions={[
-          editAction<ProductAttribute>((a) => setEditing({ attribute: a })),
-          { key: "delete", icon: <span className="pi pi-trash" aria-hidden />, tooltip: "Delete", severity: "danger", onClick: (a: ProductAttribute) => confirmAction({
-            header: `Delete ${a.name}?`,
-            message: (a.categories_count ?? 0) > 0 ? `It comes off ${a.categories_count} categor${a.categories_count === 1 ? "y" : "ies"}. If products are described by it, it stays.` : "This cannot be undone.",
+        rowActions={[viewAction<ProductAttribute>((a) => setViewing(a)), editAction<ProductAttribute>((a) => setEditing({ attribute: a }))]}
+        selection={{ selected: ticked, onChange: setTicked }}
+        toolbarActions={[
+          deleteSelectedAction<ProductAttribute>(() => confirmAction({
+            header: ticked.length === 1 ? `Delete ${ticked[0].name}?` : `Delete ${ticked.length} attributes?`,
+            message: "This cannot be undone. They come off their categories. If products are described by any of them, none are deleted.",
             danger: true,
             acceptLabel: "Delete",
-            accept: () => remove.mutateAsync(a),
-          }) },
+            accept: () => remove.mutateAsync(ticked),
+          })),
+          createAction<ProductAttribute>(() => setEditing({ attribute: null })),
         ]}
+      />
+      <RecordDetailsDialog
+        header={viewing?.name ?? ""}
+        visible={!!viewing}
+        onHide={() => setViewing(null)}
+        record={viewing}
+        fields={viewing ? [
+          { label: "Name", value: viewing.name },
+          { label: "Filled in as", value: `${viewing.input_type}${viewing.unit ? ` (${viewing.unit})` : ""}` },
+          { label: "Choices", value: viewing.input_type === "List" ? (viewing.options ?? []).map((o) => o.value).join(", ") : "Typed in", wide: true },
+          { label: "Hint for vendors", value: viewing.hint || "None", wide: true },
+          { label: "Categories", value: viewing.categories_count ?? 0 },
+        ] : []}
+        footer={viewing && <div className="flex justify-end gap-2"><Button label="Close" text onClick={() => setViewing(null)} /><Button label="Edit" icon="pi pi-pencil" outlined onClick={() => { setEditing({ attribute: viewing }); setViewing(null); }} /></div>}
       />
       <AttributeDialog visible={!!editing} attribute={editing?.attribute ?? null} onHide={() => setEditing(null)} />
     </div>
@@ -130,7 +146,7 @@ function AttributeDialog({ visible, attribute, onHide }: { visible: boolean; att
   const toast = usePrimeReactToast();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
-  const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
+  const { control, handleSubmit, reset, setError, formState: { errors , isDirty } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "", input_type: "List", unit: "", hint: "", options: [] } });
   const type = useWatch({ control, name: "input_type" });
 
   useResetOnOpen(visible, attribute?.id ?? "new", () => setFormError(null));
@@ -160,9 +176,11 @@ function AttributeDialog({ visible, attribute, onHide }: { visible: boolean; att
     onError: (error) => setFormError(applyServerErrors(error, setError, ["name", "input_type", "unit", "hint", "options"])),
   });
 
+  const close = guardedClose(isDirty, save.isPending, onHide);
+
   return (
-    <Dialog header={attribute ? `Edit ${attribute.name}` : "Add an attribute"} visible={visible} onHide={onHide} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
-      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); save.mutate(v); })}>
+    <Dialog header={attribute ? `Edit ${attribute.name}` : "Add an attribute"} visible={visible} onHide={close} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
+      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); confirmSubmit("this attribute", () => save.mutateAsync(v)); })}>
         <Field label="Name" required error={errors.name?.message}>
           <Controller control={control} name="name" render={({ field }) => <InputText {...field} className="w-full" placeholder="Colour" invalid={!!errors.name} />} />
         </Field>
@@ -188,7 +206,7 @@ function AttributeDialog({ visible, attribute, onHide }: { visible: boolean; att
         </Field>
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
         <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
-          <Button type="button" text label="Cancel" onClick={onHide} disabled={save.isPending} />
+          <Button type="button" text label="Cancel" onClick={close} disabled={save.isPending} />
           <Button type="submit" icon="pi pi-check" label="Save" loading={save.isPending} />
         </div>
       </form>

@@ -16,6 +16,7 @@ import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { decideVendor, getVendor, type VendorDecision } from "@/services/vendors/vendors-service";
 import type { Vendor } from "@/services/types/kheengz";
+import { VendorRecordSkeleton } from "@/components/dashboard/RecordSkeleton";
 
 /**
  * A vendor, for reviewers (D35): the details and papers to check, payout destinations waiting, the
@@ -28,7 +29,7 @@ export default function VendorReview() {
   const vendor = query.data;
   useBreadcrumbTitle(vendor?.name);
 
-  if (query.isPending || !vendor) return <div className="h-64 animate-pulse rounded-2xl bg-(--bg-card)" role="status" aria-label="Loading" />;
+  if (query.isPending || !vendor) return <VendorRecordSkeleton />;
 
   const decides = can("manage vendors");
   const mode = decides ? "reviewer" : "member";

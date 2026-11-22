@@ -14,6 +14,7 @@ import { ugx } from "@/lib/format";
 import { APP_NAME } from "@/lib/brand";
 import { applyServerErrors } from "@/lib/validation";
 import { getPlatformSettings, updatePlatformSettings } from "@/services/vendors/vendors-service";
+import { CardsPageSkeleton } from "@/components/dashboard/RecordSkeleton";
 
 const whole = (message: string, max: number) => z.number({ error: message }).int().min(0, message).max(max, message);
 
@@ -40,7 +41,7 @@ export default function PlatformSettingsForm() {
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
   const query = useQuery({ queryKey: ["platform-settings"], queryFn: getPlatformSettings });
-  const { control, handleSubmit, reset, setError, formState: { errors, isDirty } } = useForm<Values>({ resolver: zodResolver(schema) });
+  const { control, handleSubmit, reset, setError, formState: { errors, isDirty } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { commission_percent: 0, fixed_fee_per_order: 0, service_fee_per_order: 0, debt_limit_amount: 0, debt_limit_days: 1, marzpay_enabled: false, olycash_enabled: false, card_enabled: false, pay_on_delivery_enabled: false } });
 
   // Seeded from the saved settings, and again after each save; never while someone is editing.
   useEffect(() => {
@@ -61,7 +62,7 @@ export default function PlatformSettingsForm() {
     onError: (error) => setFormError(applyServerErrors(error, setError, { commission_bps: "commission_percent", fixed_fee_per_order: "fixed_fee_per_order", service_fee_per_order: "service_fee_per_order", debt_limit_amount: "debt_limit_amount", debt_limit_days: "debt_limit_days" })),
   });
 
-  if (query.isPending) return <div className="h-64 animate-pulse rounded-2xl bg-(--bg-card)" role="status" aria-label="Loading" />;
+  if (query.isPending) return <CardsPageSkeleton padded={false} />;
 
   const money = (name: "fixed_fee_per_order" | "service_fee_per_order" | "debt_limit_amount") => (
     <Controller control={control} name={name} render={({ field }) => (

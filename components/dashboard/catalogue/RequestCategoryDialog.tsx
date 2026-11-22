@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { InputText } from "primereact/inputtext";
 import type { AxiosError } from "axios";
 import { useMutation } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ import { useResetOnOpen } from "@/hooks/useResetOnOpen";
 import type { ApiErrorBody } from "@/lib/validation";
 import { requestCategory } from "@/services/catalogue/catalogue-service";
 import type { Category } from "@/services/types/catalogue";
+import { confirmSubmit } from "@/components/dashboard/ConfirmAction";
 
 /**
  * Ask Kheengz for a category the tree lacks (D32), from the product form. Until it is added the
@@ -50,7 +51,7 @@ export default function RequestCategoryDialog({ shopId, categories, visible, onH
         e.preventDefault();
         setError(null);
         if (name.trim().length < 2) return setError("Say what the category should be called.");
-        ask.mutate();
+        confirmSubmit("this request", () => ask.mutateAsync());
       }}>
         <p className="text-sm text-(--text-secondary)">We usually add it the same day and tell you. Meanwhile, put the product in the nearest category.</p>
         <Field label="Name" required>

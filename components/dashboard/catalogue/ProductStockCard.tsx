@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Paginator } from "primereact/paginator";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/dashboard/ui";
@@ -10,6 +10,7 @@ import RecordStockDialog from "@/components/dashboard/catalogue/RecordStockDialo
 import { dateTime } from "@/lib/format";
 import { getStockCard, getStockMovements } from "@/services/catalogue/catalogue-service";
 import type { StockMovement } from "@/services/types/catalogue";
+import { Bar, TimelineSkeleton } from "@/components/dashboard/RecordSkeleton";
 
 const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 
@@ -33,7 +34,7 @@ export default function ProductStockCard({ productId, editable }: { productId: s
       </span>
     }>
       {card.isPending ? (
-        <div className="h-20 animate-pulse rounded-lg bg-(--border-color)/40" role="status" aria-label="Loading" />
+        <ul className="space-y-3" role="status" aria-label="Loading">{[0, 1].map((i) => <li key={i} className="flex justify-between"><Bar w="w-24" /><Bar w="w-16" /></li>)}</ul>
       ) : (
         <ul className="divide-y divide-(--border-color)">
           {variants.map((v) => {
@@ -84,7 +85,7 @@ function StockHistoryDialog({ productId, visible, onHide }: { productId: string;
   return (
     <Dialog header="Stock history" visible={visible} onHide={onHide} style={{ width: "min(40rem, 95vw)" }}>
       {query.isPending ? (
-        <div className="h-48 animate-pulse rounded-xl bg-(--border-color)/40" role="status" aria-label="Loading" />
+        <div className="pt-1"><TimelineSkeleton entries={5} /></div>
       ) : list.length === 0 ? (
         <p className="text-sm text-(--text-muted)">Nothing recorded yet.</p>
       ) : (

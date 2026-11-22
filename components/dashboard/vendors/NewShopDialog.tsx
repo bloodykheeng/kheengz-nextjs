@@ -2,7 +2,7 @@
 
 import React, { useDeferredValue, useEffect, useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
@@ -19,6 +19,7 @@ import { applyServerErrors, phone, requiredText } from "@/lib/validation";
 import { checkShopSlug, createShop } from "@/services/vendors/vendors-service";
 import { SHOP_TYPES, type Vendor } from "@/services/types/kheengz";
 import { SHOPS_DOMAIN } from "@/lib/brand";
+import { confirmSubmit, guardedClose } from "@/components/dashboard/ConfirmAction";
 
 /** The address name rule the API enforces (ShopSlug): 3 to 40 small letters, digits and single hyphens. */
 const SLUG = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){2,39}$/;
@@ -47,7 +48,7 @@ export default function NewShopDialog({ vendor, visible, onHide }: { vendor: Ven
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
   const [slugTouched, setSlugTouched] = useState(false);
-  const { control, handleSubmit, reset, setError, setValue, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema) });
+  const { control, handleSubmit, reset, setError, setValue, formState: { errors , isDirty } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "", slug: "", shop_type: "", description: "", phone: "", location_address: "", location_area: "", location_opening_hours: "" } });
   const name = useWatch({ control, name: "name" });
   const slug = useWatch({ control, name: "slug" });
   const typedSlug = useDeferredValue(slug ?? "");
@@ -87,9 +88,11 @@ export default function NewShopDialog({ vendor, visible, onHide }: { vendor: Ven
 
   const slugHint = availability.data && availability.data.slug === typedSlug ? availability.data.message : `Buyers find it at ${typedSlug || "yourshop"}.${SHOPS_DOMAIN}`;
 
+  const close = guardedClose(isDirty, save.isPending, onHide);
+
   return (
-    <Dialog maximizable header="Open a shop" visible={visible} onHide={onHide} style={{ width: "min(40rem, 95vw)" }} closable={!save.isPending}>
-      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); save.mutate(v); })}>
+    <Dialog maximizable header="Open a shop" visible={visible} onHide={close} style={{ width: "min(40rem, 95vw)" }} closable={!save.isPending}>
+      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); confirmSubmit("this shop", () => save.mutateAsync(v)); })}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Shop name" required error={errors.name?.message}>
             <Controller control={control} name="name" render={({ field }) => <InputText {...field} className="w-full" placeholder="Home Nest" invalid={!!errors.name} />} />
@@ -133,7 +136,7 @@ export default function NewShopDialog({ vendor, visible, onHide }: { vendor: Ven
         </fieldset>
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
         <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
-          <Button type="button" text label="Cancel" onClick={onHide} disabled={save.isPending} />
+          <Button type="button" text label="Cancel" onClick={close} disabled={save.isPending} />
           <Button type="submit" icon="pi pi-check" label="Save as draft" loading={save.isPending} />
         </div>
       </form>

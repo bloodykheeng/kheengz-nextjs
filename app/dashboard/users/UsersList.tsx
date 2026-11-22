@@ -23,6 +23,7 @@ import { asDate, type ExportColumn } from "@/lib/exportRows";
 import { LuMailCheck } from "react-icons/lu";
 import { APP_NAME } from "@/lib/brand";
 import { useResetWhen } from "@/hooks/useResetOnOpen";
+import { useTicked } from "@/hooks/useTicked";
 
 const EMAIL_STATUSES = ["Confirmed", "Not confirmed"] as const;
 const emailStatus = (u: User) => (u.email_verified_at ? "Confirmed" : "Not confirmed");
@@ -78,7 +79,8 @@ export default function UsersList() {
   const [viewing, setViewing] = useState<User | null>(null);
   const editUser = (u: User) => setEditing({ user: u });
 
-  const [selected, setSelected] = useState<User[]>([]);
+  // Ticks clear when the page, search, sort or filters change; only rows still shown count (useTicked).
+  const [selected, setSelected] = useTicked(query.data?.data ?? [], `${page}:${pageSize}:${search}:${status}:${role}:${emailStatusFilter}:${sort}`);
   const remove = useMutation({
     mutationFn: (users: User[]) => (users.length === 1 ? deleteUser(users[0].id) : deleteUsers(users.map((u) => u.id))),
     onSuccess: async (response) => {

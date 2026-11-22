@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Button } from "primereact/button";
 
 /**
@@ -25,6 +25,11 @@ export interface ConfirmOptions {
   danger?: boolean;
   /** Shown instead of Cancel/accept when the action cannot be done (e.g. a product with orders). */
   blocked?: boolean;
+  /**
+   * Close when `accept` fails instead of staying for another try: for a form, whose 422 errors are shown on its
+   * own fields, behind this dialog (confirmSubmit).
+   */
+  closeOnError?: boolean;
   accept: () => Promise<unknown>;
 }
 
@@ -33,6 +38,43 @@ let listener: Listener | null = null;
 
 export function confirmAction(options: ConfirmOptions): void {
   listener?.(options);
+}
+
+/**
+ * "Are you sure?" before a create or edit form is sent ("Confirm submission", the coding notes' rule). Call it
+ * from the form's `handleSubmit`, so only a valid form is confirmed:
+ *
+ *   handleSubmit((v) => confirmSubmit("this category", () => save.mutateAsync(v)))
+ *
+ * Yes sends it with a spinner; success closes this and the form (the mutation's onSuccess); a refusal closes
+ * this so the API's errors show on the form's fields.
+ */
+export function confirmSubmit(what: string, accept: () => Promise<unknown>): void {
+  confirmAction({
+    header: "Confirm submission",
+    message: `Are you sure you want to save ${what}?`,
+    acceptLabel: "Yes, save",
+    closeOnError: true,
+    accept,
+  });
+}
+
+/**
+ * A form dialog's close handler: closing with changes asks first, since a half-typed record is easy to lose by a
+ * stray click; nothing closes while it is saving. Use it as the dialog's `onHide` and its Cancel.
+ */
+export function guardedClose(isDirty: boolean, isPending: boolean, onHide: () => void) {
+  return () => {
+    if (isPending) return;
+    if (!isDirty) return onHide();
+    confirmAction({
+      header: "Discard your changes?",
+      message: "What you typed in this form will be lost.",
+      acceptLabel: "Discard",
+      danger: true,
+      accept: async () => onHide(),
+    });
+  };
 }
 
 export function ConfirmActionHost() {
@@ -60,7 +102,9 @@ export function ConfirmActionHost() {
       await options.accept();
       setOptions(null);
     } catch {
-      // The global mutation error toast explains it; the dialog stays for another try.
+      // The global mutation error toast explains it; the dialog stays for another try,
+      // unless the form behind it shows the errors itself.
+      if (options.closeOnError) setOptions(null);
     } finally {
       setPending(false);
     }

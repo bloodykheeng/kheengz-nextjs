@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import type { DataTablePageEvent, DataTableSortEvent } from "primereact/datatable";
 import { useQuery } from "@tanstack/react-query";
-import PrimeReactDataTable, { viewAction } from "@/components/dashboard/tables/PrimeReactDataTable";
+import PrimeReactDataTable, { createAction, viewAction } from "@/components/dashboard/tables/PrimeReactDataTable";
 import FiltersButton, { filterValuesFrom, type FilterGroup } from "@/components/dashboard/filters/FiltersButton";
 import { optionsOf } from "@/components/dashboard/filters/pickers";
 import { PageHeader, StatusTag } from "@/components/dashboard/ui";
@@ -70,10 +69,10 @@ export default function ShopsList() {
       header: "Shop",
       sortable: true,
       body: (s: Shop) => (
-        <Link href={`/dashboard/shops/${s.id}`} className="block hover:text-(--brand-ink)">
+        <span>
           <span className="block font-medium">{s.name}</span>
           <span className="block text-xs text-(--text-muted)">{s.address}</span>
-        </Link>
+        </span>
       ),
     },
     ...(reviewer ? [{ field: "vendor", header: "Vendor", body: (s: Shop) => <span className="text-sm">{s.vendor?.name}</span> }] : []),
@@ -87,7 +86,6 @@ export default function ShopsList() {
       <PageHeader
         title={reviewer ? "Shops" : "My shops"}
         subtitle={reviewer ? "Every shop on the marketplace. Open one to review it." : "Each shop is reviewed on its own before it opens."}
-        actions={ownVendor ? <Button icon="pi pi-plus" label="Open a shop" onClick={() => setOpening(true)} /> : undefined}
       />
       <PrimeReactDataTable<Shop>
         data={query.data?.data ?? []}
@@ -108,6 +106,7 @@ export default function ShopsList() {
         pagination={{ total: query.data?.meta.total ?? 0, rows: pageSize, first, onPageChange: (e: DataTablePageEvent) => pushParams({ page: (e.page ?? 0) + 1, pageSize: e.rows }) }}
         sort={{ field: sortField, order: sortOrder, onSort: (e: DataTableSortEvent) => pushParams({ sort: columnSortToParam(e.sortField, e.sortOrder), page: DEFAULT_PAGE }) }}
         rowActions={[viewAction<Shop>((s) => router.push(`/dashboard/shops/${s.id}`))]}
+        toolbarActions={ownVendor ? [{ ...createAction<Shop>(() => setOpening(true)), label: "Open a shop" }] : []}
       />
       {ownVendor && <NewShopDialog vendor={ownVendor} visible={opening} onHide={() => setOpening(false)} />}
     </div>

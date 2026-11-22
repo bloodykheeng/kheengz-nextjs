@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { InputText } from "primereact/inputtext";
 import { MultiSelect } from "primereact/multiselect";
 import { SelectButton } from "primereact/selectbutton";
@@ -11,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, Field } from "@/components/dashboard/ui";
-import { confirmAction } from "@/components/dashboard/ConfirmAction";
+import { confirmAction, confirmSubmit, guardedClose } from "@/components/dashboard/ConfirmAction";
 import PhoneField from "@/components/dashboard/forms/PhoneField";
 import { useResetOnOpen } from "@/hooks/useResetOnOpen";
 import { useAuth } from "@/contexts/AuthContext";
@@ -96,7 +96,7 @@ function MemberDialog({ vendor, member, visible, onHide }: { vendor: Vendor; mem
   const toast = usePrimeReactToast();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
-  const { control, handleSubmit, reset, setError, formState: { errors } } = useForm<MemberValues>({ resolver: zodResolver(memberSchema) });
+  const { control, handleSubmit, reset, setError, formState: { errors , isDirty } } = useForm<MemberValues>({ resolver: zodResolver(memberSchema), defaultValues: { name: "", email: "", phone: "", role: "Staff", shop_ids: [] } });
   const role = useWatch({ control, name: "role" });
 
   useResetOnOpen(visible, member?.id ?? "new", () => setFormError(null));
@@ -123,9 +123,11 @@ function MemberDialog({ vendor, member, visible, onHide }: { vendor: Vendor; mem
 
   const shopOptions = (vendor.shops ?? []).filter((s) => s.status !== "Closed").map((s) => ({ label: s.name, value: s.id }));
 
+  const close = guardedClose(isDirty, save.isPending, onHide);
+
   return (
-    <Dialog header={member ? `Change ${member.name}` : "Add someone"} visible={visible} onHide={onHide} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
-      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); save.mutate(v); })}>
+    <Dialog header={member ? `Change ${member.name}` : "Add someone"} visible={visible} onHide={close} style={{ width: "min(32rem, 95vw)" }} closable={!save.isPending}>
+      <form className="space-y-4" noValidate onSubmit={handleSubmit((v) => { setFormError(null); confirmSubmit("this person", () => save.mutateAsync(v)); })}>
         {!member && (
           <>
             <Field label="Name" required error={errors.name?.message}>
@@ -151,7 +153,7 @@ function MemberDialog({ vendor, member, visible, onHide }: { vendor: Vendor; mem
         )}
         {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{formError}</p>}
         <div className="flex justify-end gap-2 border-t border-(--border-color) pt-4">
-          <Button type="button" text label="Cancel" onClick={onHide} disabled={save.isPending} />
+          <Button type="button" text label="Cancel" onClick={close} disabled={save.isPending} />
           <Button type="submit" icon="pi pi-check" label="Save" loading={save.isPending} />
         </div>
       </form>

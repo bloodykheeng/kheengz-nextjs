@@ -5,7 +5,7 @@ import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { InputSwitch } from "primereact/inputswitch";
@@ -21,6 +21,7 @@ import { applyServerErrors } from "@/lib/validation";
 import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { updateAuthProfile } from "@/services/auth/auth-service";
 import type { UserFields } from "@/services/types/auth";
+import { confirmSubmit } from "@/components/dashboard/ConfirmAction";
 
 
 const schema = z
@@ -201,7 +202,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       maximizable
     >
       <form
-        onSubmit={handleSubmit((d) => mutation.mutate(d))}
+        onSubmit={handleSubmit((d) => confirmSubmit("your profile", () => mutation.mutateAsync(d)))}
         className="space-y-5 p-1"
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

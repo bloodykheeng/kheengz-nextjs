@@ -16,6 +16,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { getProduct, updateProduct } from "@/services/catalogue/catalogue-service";
 import { getShop } from "@/services/vendors/vendors-service";
 import type { ProductPayload } from "@/services/types/catalogue";
+import { ProductRecordSkeleton } from "@/components/dashboard/RecordSkeleton";
+import { confirmSubmit } from "@/components/dashboard/ConfirmAction";
 
 const CATALOGUE_CLOSED = new Set(["Rejected", "Closed"]);
 
@@ -50,7 +52,7 @@ export default function ProductEditor() {
   });
 
   if (product.isPending || shop.isPending || !product.data || !shop.data) {
-    return <div className="h-64 animate-pulse rounded-2xl bg-(--bg-card)" role="status" aria-label="Loading" />;
+    return <ProductRecordSkeleton />;
   }
 
   const p = product.data;
@@ -69,7 +71,7 @@ export default function ProductEditor() {
         product={p}
         readOnly={!editable}
         saving={save.isPending}
-        onSubmit={(payload, setError, reset) => save.mutate({ payload, setError, reset })}
+        onSubmit={(payload, setError, reset) => confirmSubmit("this product", () => save.mutateAsync({ payload, setError, reset }))}
         aside={
           <>
             <ProductStatusCard product={p} shop={shop.data} editable={editable} moderator={can("manage vendors")} />

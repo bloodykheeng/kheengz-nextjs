@@ -263,3 +263,23 @@ export async function getShopStock(shopId: string, params: Params = {}) {
   const { data } = await axiosAPI.get<Paginated<ShopStockRow>>(`/v1/shops/${shopId}/stock`, { params: cleanParams(params) });
   return data;
 }
+
+// ── Bulk deletes and the paged Units screen ───────────────────────────────────
+
+/** Ticked attributes, all or none (none when products use one of them). */
+export async function deleteProductAttributes(ids: string[]) {
+  const { data } = await axiosAPI.delete<Done>("/v1/product-attributes", { data: { ids } });
+  return data;
+}
+
+/** Ticked units, all or none (none when products are sold by one of them). */
+export async function deleteUnits(ids: string[]) {
+  const { data } = await axiosAPI.delete<Done>("/v1/units", { data: { ids } });
+  return data;
+}
+
+/** The Units screen, paged like every list (pickers use getUnits). */
+export async function getUnitsPage(params: Params = {}) {
+  const { data } = await axiosAPI.get<Paginated<Unit>>("/v1/units", { params: cleanParams({ page: 1, ...params }) });
+  return data;
+}

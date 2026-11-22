@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import type { DataTablePageEvent, DataTableSortEvent } from "primereact/datatable";
@@ -61,10 +60,10 @@ export default function VendorsList() {
       header: "Vendor",
       sortable: true,
       body: (v: Vendor) => (
-        <Link href={`/dashboard/vendors/${v.id}`} className="block hover:text-(--brand-ink)">
+        <span>
           <span className="block font-medium">{v.name}</span>
           <span className="block text-xs text-(--text-muted)">{v.kind === "Company" ? "Company" : "Individual"} · {ugandanLocal(v.phone)}</span>
-        </Link>
+        </span>
       ),
     },
     { field: "shops_count", header: "Shops", body: (v: Vendor) => v.shops_count ?? 0 },

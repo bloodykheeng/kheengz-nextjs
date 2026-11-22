@@ -12,6 +12,8 @@ import { useAppRouter } from "@/hooks/useAppRouter";
 import { createProduct } from "@/services/catalogue/catalogue-service";
 import { getShop } from "@/services/vendors/vendors-service";
 import type { ProductPayload } from "@/services/types/catalogue";
+import { ProductRecordSkeleton } from "@/components/dashboard/RecordSkeleton";
+import { confirmSubmit } from "@/components/dashboard/ConfirmAction";
 
 /** A new product, saved as a draft; then its own page opens for the photos and putting it on sale. */
 export default function NewProduct() {
@@ -39,12 +41,12 @@ export default function NewProduct() {
     },
   });
 
-  if (shop.isPending || !shop.data) return <div className="h-64 animate-pulse rounded-2xl bg-(--bg-card)" role="status" aria-label="Loading" />;
+  if (shop.isPending || !shop.data) return <ProductRecordSkeleton />;
 
   return (
     <div className="space-y-5">
       <PageHeader title="New product" subtitle={`For ${shop.data.name}. Save it as a draft, then add photos and put it on sale.`} />
-      <ProductForm shop={shop.data} product={null} saving={save.isPending} onSubmit={(payload, setError) => save.mutate({ payload, setError })} />
+      <ProductForm shop={shop.data} product={null} saving={save.isPending} onSubmit={(payload, setError) => confirmSubmit("this product", () => save.mutateAsync({ payload, setError }))} />
     </div>
   );
 }
