@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListPageSkeleton } from "@/components/dashboard/RecordSkeleton";
 import RecordsList from "./RecordsList";
 
 export default function AuditTrailPage() {
@@ -10,7 +11,7 @@ export default function AuditTrailPage() {
           Every recorded action, who did it and what changed.
         </p>
       </div>
-      <Suspense>
+      <Suspense fallback={<ListPageSkeleton padded={false} />}>
         <RecordsList />
       </Suspense>
       {/* The places come from DB-IP City Lite, whose free licence (CC BY 4.0) asks for this link on

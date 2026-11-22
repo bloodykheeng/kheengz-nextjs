@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { CardsPageSkeleton } from "@/components/dashboard/RecordSkeleton";
 import ProfileDetails from "./ProfileDetails";
 
 export default function ProfilePage() {
@@ -10,7 +11,7 @@ export default function ProfilePage() {
           Your account and what it may do.
         </p>
       </div>
-      <Suspense>
+      <Suspense fallback={<CardsPageSkeleton padded={false} />}>
         <ProfileDetails />
       </Suspense>
     </div>

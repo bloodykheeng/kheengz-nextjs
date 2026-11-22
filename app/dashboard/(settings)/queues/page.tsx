@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListPageSkeleton } from "@/components/dashboard/RecordSkeleton";
 import QueueTabsPage from "./QueueTabsPage";
 
 export default function QueuesPage() {
@@ -10,7 +11,7 @@ export default function QueuesPage() {
           Background jobs waiting to run, and the ones that failed.
         </p>
       </div>
-      <Suspense>
+      <Suspense fallback={<ListPageSkeleton padded={false} />}>
         <QueueTabsPage />
       </Suspense>
     </div>

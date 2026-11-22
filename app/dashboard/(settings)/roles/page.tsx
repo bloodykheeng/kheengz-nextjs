@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListPageSkeleton } from "@/components/dashboard/RecordSkeleton";
 import RolesSyncPage from "./RolesSyncPage";
 
 export default function RolesPage() {
@@ -10,7 +11,7 @@ export default function RolesPage() {
           What each role can do.
         </p>
       </div>
-      <Suspense>
+      <Suspense fallback={<ListPageSkeleton padded={false} />}>
         <RolesSyncPage />
       </Suspense>
     </div>
