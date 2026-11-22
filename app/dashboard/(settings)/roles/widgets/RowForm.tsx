@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TabView, TabPanel } from "primereact/tabview";
 import { Checkbox } from "primereact/checkbox";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { syncPermissionsToRoles } from "@/services/settings/roles/roles-service";
 import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { RolesSubmissionSchema, type Role } from "./types";

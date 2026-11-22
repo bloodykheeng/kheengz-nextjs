@@ -2,7 +2,7 @@
 
 import React, { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { ProgressBar } from "primereact/progressbar";
 import { collectAll, writeRows, type ExportColumn } from "@/lib/exportRows";
 import { useResetOnOpen } from "@/hooks/useResetOnOpen";

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Button } from "primereact/button";
 import { dateTime } from "@/lib/format";
 import { asDate, type ExportColumn } from "@/lib/exportRows";

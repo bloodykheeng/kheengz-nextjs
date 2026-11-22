@@ -11,8 +11,8 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
 
   compiler: {
-    // No console output in production builds.
-    removeConsole: process.env.NODE_ENV === "production",
+    // No console output in production builds, except errors: a crash leaves a trace support can read.
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
   },
 
   // next/image sizes the photos the API stores for each spot they are shown in

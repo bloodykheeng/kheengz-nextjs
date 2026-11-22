@@ -65,19 +65,24 @@ export default function RootLayout({
     // suppressHydrationWarning: the theme script below may add `dark` and a color-scheme to <html>
     // before React hydrates, on purpose. React's documented exception for exactly this; it covers
     // <html>'s own attributes only, so a real mismatch anywhere inside the page is still reported.
+    // translate="no": a page translator rewrites text under React, which crashes it (removeChild) and can leave
+    // old figures on screen after an update (docs/dashboard-patterns.md §18).
     <html
       lang="en"
+      translate="no"
       className={`${display.variable} ${body.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
+        <meta name="google" content="notranslate" />
         {/* Dark mode before the first paint on dashboard and sign-in pages (lib/themeBoot.ts). Inline
             and in the root layout on purpose: it must run while the HTML is parsed (next/script's
             beforeInteractive queues it until later), and the root layout is never drawn again in
             the browser, so React never has to create a <script> during navigation. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
-      <body className="min-h-full flex flex-col">
+      {/* suppressHydrationWarning: browser extensions write attributes on <body> before React hydrates. */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <NextJsProgressBar />
         <PrimeReactCtx>
           <PrimeReactToastContext>

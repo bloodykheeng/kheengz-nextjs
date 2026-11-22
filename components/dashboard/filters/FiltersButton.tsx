@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import type { AxiosResponse } from "axios";
 import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { Dropdown } from "primereact/dropdown";
 import FilterSection from "@/components/dashboard/forms/FilterSection";
 import InfiniteSelect, { type Option, type OptionPage } from "@/components/dashboard/forms/InfiniteSelect";

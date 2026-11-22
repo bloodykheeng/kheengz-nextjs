@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
+import { Dialog } from "@/components/common/Dialog";
 import { InputText } from "primereact/inputtext";
 import { useResetWhen } from "@/hooks/useResetOnOpen";
 
