@@ -187,6 +187,12 @@ decision that can no longer be made. Other screens follow through `records.chang
 A request with a file is built with `toFormData()` ([lib/formData.ts](../lib/formData.ts)): booleans
 as "1"/"0", each array item as its own `key[]` entry, null and "" left out.
 
+**Send it with `{ headers: { "Content-Type": "multipart/form-data" } }`.** The API client
+([services/axiosApi.ts](../services/axiosApi.ts)) defaults to JSON, and axios then serialises the
+FormData as JSON: the file never arrives and Laravel answers "The photos.0 field must be a file."
+(`MULTIPART` in [catalogue-service.ts](../services/catalogue/catalogue-service.ts)). An edit with a
+file is a POST with `_method=PUT` (PHP reads no multipart body on a PUT).
+
 ## 15. Words on screen
 
 - **Buyers** order, pay and track; they never "register". **Vendors** run **shops**. "Pay on
@@ -207,6 +213,29 @@ as "1"/"0", each array item as its own `key[]` entry, null and "" left out.
   `<Suspense>`: the page's own body (see [shops/[id]/page.tsx](../app/dashboard/shops/[id]/page.tsx)),
   the sidebar menu's highlight, the breadcrumb. Shared code (contexts, `handleApiError`) never reads it
   during render; it reads `window.location` when it needs the address.
+
+## 17. A big form: the product
+
+[ProductForm.tsx](../components/dashboard/catalogue/ProductForm.tsx) is the pattern for a form that is
+a page, not a dialog (section 4 applied to a page):
+
+- **One save for the whole record.** Options, variants and price breaks are field arrays in one
+  react-hook-form; the API saves them in one transaction and keeps ids. Variants are worked out from
+  the options by plain functions ([variants.ts](../components/dashboard/catalogue/variants.ts)), called
+  from the option handlers, never from an effect; a variant whose values survive keeps what was typed.
+- **Dirty means changed by the person**: `Object.keys(dirtyFields).length`, not `isDirty` (a field
+  registered later, like a category detail, would count as an edit). A sticky save bar shows
+  "Unsaved changes", Discard (asks first) and Save (off while nothing changed); `beforeunload` covers a
+  reload. After a save the form is re-seeded from the response.
+- **Errors where they belong.** `placeServerErrors()` puts each 422 message under its field
+  (`variants.2.sku`); the rest, and every client-side problem, are listed in the box above the save
+  bar, so an error under a folded variant is never missed.
+- **Forms never nest.** The `<form>` wraps the main column only; side cards with forms or dialogs of
+  their own (photos, status, take down) sit beside it, and the save button points at it with
+  `form={id}`. A form inside a form also submits the outer one (a dialog in a portal included: React
+  events bubble through the component tree).
+- **Read-only for reviewers**: `readOnly` disables the fields (a `<fieldset disabled>`) and drops the
+  save bar; the side cards stay live for the reviewer's own actions.
 
 ## Checking it
 

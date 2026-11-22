@@ -34,8 +34,8 @@ ESLint runs Next's full rule set with nothing switched off.
 
 | Folder | What |
 | --- | --- |
-| `app/` | Routes: `/` (storefront), `(auth)/` (sign-in, reset, sell), `dashboard/` (vendor, shops, vendors, platform settings, admin pages) |
-| `components/` | `auth/` (session providers, sign-in pieces), `brand/`, `common/`, `dashboard/` (layout, table, filters, export, forms, vendor cards) |
+| `app/` | Routes: `/` (storefront), `(auth)/` (sign-in, reset, sell), `dashboard/` (vendor, shops and their products, products, vendors, catalogue, platform settings, admin pages) |
+| `components/` | `auth/` (session providers, sign-in pieces), `brand/`, `common/`, `dashboard/` (layout, table, filters, export, forms, vendor cards, catalogue: product form, photos, category picker) |
 | `contexts/`, `hooks/`, `lib/` | Session, theme, sidebar; list params, resets, permissions; route access, formatting, API errors |
 | `services/` | One file per API area, typed to the Laravel resources (`services/types/`) |
 | `e2e/` | Playwright specs and helpers |
