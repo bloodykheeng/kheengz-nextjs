@@ -29,6 +29,17 @@ export const menuGroups: NavGroup[] = [
     ],
   },
   {
+    // The marketplace's own lists, kept by the Admin (D32).
+    id: "catalogue",
+    label: "Catalogue",
+    items: [
+      { id: "categories", label: "Categories", href: "/dashboard/catalogue/categories", iconName: "category", permission: "manage catalogue" },
+      { id: "attributes", label: "Attributes", href: "/dashboard/catalogue/attributes", iconName: "products", permission: "manage catalogue" },
+      { id: "units", label: "Units", href: "/dashboard/catalogue/units", iconName: "ledger", permission: "manage catalogue" },
+      { id: "category-requests", label: "Category requests", href: "/dashboard/catalogue/requests", iconName: "bell", permission: "manage catalogue" },
+    ],
+  },
+  {
     id: "administration",
     label: "Administration",
     items: [

@@ -24,6 +24,8 @@ const SHORTCUTS: Shortcut[] = [
   { href: "/dashboard/shops", label: "My shops", body: "Open shops and send each for review.", icon: "pi-shop", permission: "run shops" },
   { href: "/dashboard/vendors", label: "Vendors", body: "Check applications and papers, approve or suspend.", icon: "pi-id-card", permission: "view vendors" },
   { href: "/dashboard/shops", label: "Shops", body: "Review shops waiting to open.", icon: "pi-shop", permission: "view vendors" },
+  { href: "/dashboard/catalogue/categories", label: "Categories", body: "The marketplace's tree and what buyers filter by.", icon: "pi-sitemap", permission: "manage catalogue" },
+  { href: "/dashboard/catalogue/requests", label: "Category requests", body: "Shops asking for a category the tree lacks.", icon: "pi-inbox", permission: "manage catalogue" },
   { href: "/dashboard/users", label: "Users", body: "Add Admins, Staff and vendors, and turn accounts on or off.", icon: "pi-users", permission: "view users" },
   { href: "/dashboard/roles", label: "Roles & permissions", body: "Choose what each role may see and do.", icon: "pi-shield", permission: "manage roles" },
   { href: "/dashboard/queues", label: "Queues", body: "Emails, SMS and other work waiting or failed.", icon: "pi-list", permission: "view queue" },

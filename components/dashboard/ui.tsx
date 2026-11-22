@@ -105,6 +105,11 @@ const SEVERITY: Record<string, Severity> = {
   Approved: "success",
   Verified: "success",
   "Awaiting review": "warning",
+  // products (ProductStatus), category requests (CategoryRequestStatus)
+  Hidden: "secondary",
+  "Taken down": "danger",
+  Added: "success",
+  Declined: "danger",
 };
 
 const LABEL: Record<string, string> = { Successful: "Paid" };
