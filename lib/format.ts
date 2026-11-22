@@ -47,16 +47,26 @@ export function shortDate(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-/** 12 Dec 2026, 14:05 */
+const dateTimeParts = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: BUSINESS_TIMEZONE,
+});
+
+/**
+ * `21/11/2026 9:05 AM`: the house format for a moment (coding-notes navigation note, rule 12: 12-hour clock,
+ * day first), in the business timezone so every screen and every viewer agrees on the day.
+ */
 export function dateTime(iso: string | null | undefined): string {
   if (!iso) return "-";
-  return new Date(iso).toLocaleString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  const part = (type: Intl.DateTimeFormatPartTypes) => dateTimeParts.formatToParts(d).find((p) => p.type === type)?.value ?? "";
+  return `${part("day")}/${part("month")}/${part("year")} ${part("hour")}:${part("minute")} ${part("dayPeriod").toUpperCase()}`;
 }
 
 /** 2:00 PM */

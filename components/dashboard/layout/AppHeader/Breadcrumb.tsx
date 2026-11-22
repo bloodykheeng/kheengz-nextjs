@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { MdHome, MdChevronRight } from "react-icons/md";
 
 import { useBreadcrumbState } from "@/contexts/BreadcrumbContext";
+import { useHydrated } from "@/hooks/useHydrated";
+import { listReturnUrl } from "@/lib/listReturn";
 
 // Where the URL segment and the sidebar label differ. Anything not listed is
 // capitalised from the segment ("groups" -> "Groups"), which covers most pages.
@@ -14,6 +16,7 @@ const routeLabels: Record<string, string> = {
   roles: "Roles & permissions",
   "audit-trail": "Audit trail",
   announcements: "Send notifications",
+  requests: "Category requests",
 };
 
 /**
@@ -23,6 +26,9 @@ const routeLabels: Record<string, string> = {
  * in a URL. Matched by shape rather than by a list of routes, so a detail page
  * added tomorrow does not have to remember to opt in.
  */
+/** Segments that are only a step in an address, with no page of their own: shown, never linked. */
+const NO_PAGE = new Set(["/dashboard/products"]);
+
 function looksLikeAnId(seg: string): boolean {
   return /^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$/.test(seg) || /^[0-9a-f-]{36}$/i.test(seg);
 }
@@ -42,6 +48,8 @@ export default function Breadcrumb() {
   // `title` is the name once it has it. The two are separate so a crumb that is
   // still loading can show a skeleton rather than a word that names nothing.
   const { claimed, title: recordTitle } = useBreadcrumbState();
+  // A list link returns to where the list was left (lib/listReturn.ts), once the browser can read it.
+  const hydrated = useHydrated();
 
   return (
     <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm">
@@ -79,13 +87,13 @@ export default function Breadcrumb() {
                 aria-label="Loading"
                 className="inline-block h-4 w-24 animate-pulse rounded bg-(--border-color) align-middle"
               />
-            ) : isLast ? (
-              <span className="max-w-[45vw] truncate font-semibold text-(--text-primary) sm:max-w-none">
+            ) : isLast || NO_PAGE.has(href) ? (
+              <span className={`max-w-[45vw] truncate sm:max-w-none ${isLast ? "font-semibold text-(--text-primary)" : "text-(--text-muted)"}`}>
                 {text}
               </span>
             ) : (
               <Link
-                href={href}
+                href={hydrated && !isRecord ? listReturnUrl(href) : href}
                 className="text-(--text-muted) transition-colors hover:text-(--text-primary)"
               >
                 {text}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import { useAppRouter } from "@/hooks/useAppRouter";
+import { rememberListUrl } from "@/lib/listReturn";
 
 export const DEFAULT_PAGE = 1;
 
@@ -37,6 +38,10 @@ export function useListParams(defaultPageSize = DEFAULT_PAGE_SIZE) {
 
   const first = (page - 1) * pageSize;
 
+  // Back to the list where it was left (lib/listReturn.ts): its page, filters and search, for this tab.
+  const query = searchParams.toString();
+  useEffect(() => rememberListUrl(pathname, query), [pathname, query]);
+
   /** Writes params; an empty value removes the key so URLs stay clean. */
   const pushParams = useCallback(
     (updates: Record<string, string | number>) => {
@@ -47,7 +52,9 @@ export function useListParams(defaultPageSize = DEFAULT_PAGE_SIZE) {
         else params.delete(key);
       });
       const qs = params.toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname);
+      // A new page, filter or sort of the same list keeps the reader where they are: Next scrolls to the
+      // top on a push by default, which threw them off the list they were paging (hooks/useScrollMemory.ts).
+      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
     [searchParams, pathname, router]
   );

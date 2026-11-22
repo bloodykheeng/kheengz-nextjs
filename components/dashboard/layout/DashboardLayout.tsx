@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,10 +9,18 @@ import AuthLoadingScreen from "@/components/auth/AuthLoadingScreen";
 import AppSidebar from "./AppSidebar";
 import AppHeader from "./AppHeader";
 import { ConfirmActionHost } from "@/components/dashboard/ConfirmAction";
+import { useScrollMemory } from "@/hooks/useScrollMemory";
 // Single source of truth for the nav: see lib/menuItems.ts.
 import { menuGroups } from "@/lib/menuItems";
 
+/** Reload or Back / Forward returns to the same place on the page. Reads the URL: its own Suspense boundary. */
+function ScrollMemory({ box }: { box: React.RefObject<HTMLElement | null> }) {
+  useScrollMemory(box);
+  return null;
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const main = useRef<HTMLElement>(null);
   const { isMobileOpen, closeMobile, layoutWidth } = useSidebar();
   const { isProfileLoading } = useAuth();
 
@@ -85,7 +93,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <BreadcrumbProvider>
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <AppHeader />
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main ref={main} className="flex-1 overflow-auto">
+              <Suspense>
+                <ScrollMemory box={main} />
+              </Suspense>
+              {children}
+            </main>
           </div>
         </BreadcrumbProvider>
 

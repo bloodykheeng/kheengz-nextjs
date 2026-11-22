@@ -1,3 +1,5 @@
+import { dateTime } from "@/lib/format";
+
 /**
  * Presentation helpers for activity-log rows.
  *
@@ -382,10 +384,9 @@ export function summariseValue(field: SnapshotField): string {
   return displayValue(field.value);
 }
 
+/** The house format, `21/11/2026 9:05 AM` (lib/format.ts). */
 export function formatDateTime(iso?: string | null): string {
-  if (!iso) return "-";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleString();
+  return dateTime(iso);
 }
 
 /** "3 minutes ago": cheap relative time, no dependency. */
