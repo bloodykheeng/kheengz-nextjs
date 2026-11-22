@@ -9,6 +9,7 @@ import { PageHeader, StatusTag } from "@/components/dashboard/ui";
 import ProductForm, { placeServerErrors, productFormValues, type ProductFormValues } from "@/components/dashboard/catalogue/ProductForm";
 import ProductPhotosCard from "@/components/dashboard/catalogue/ProductPhotosCard";
 import ProductStatusCard from "@/components/dashboard/catalogue/ProductStatusCard";
+import ProductStockCard from "@/components/dashboard/catalogue/ProductStockCard";
 import { useBreadcrumbTitle } from "@/contexts/BreadcrumbContext";
 import { usePrimeReactToast } from "@/contexts/PrimeReactToastContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -36,7 +37,8 @@ export default function ProductEditor() {
     meta: { skipGlobalError: true },
     onSuccess: async (response, { reset }) => {
       queryClient.setQueryData(["product", id], response.data);
-      await queryClient.invalidateQueries({ queryKey: ["products", response.data.shop_id] });
+      // Variants may have changed: the stock card lists them.
+      await Promise.all([queryClient.invalidateQueries({ queryKey: ["products", response.data.shop_id] }), queryClient.invalidateQueries({ queryKey: ["stock", id] })]);
       // Re-seed from what was saved (dashboard-patterns §4): ids of new variants, a new address name.
       reset(productFormValues(response.data));
       toast.success(response.message);
@@ -71,6 +73,7 @@ export default function ProductEditor() {
         aside={
           <>
             <ProductStatusCard product={p} shop={shop.data} editable={editable} moderator={can("manage vendors")} />
+            <ProductStockCard productId={p.id} editable={editable} />
             <ProductPhotosCard product={p} editable={editable} />
           </>
         }

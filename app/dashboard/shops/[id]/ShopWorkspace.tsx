@@ -105,6 +105,9 @@ function ShopActions({ shop, vendor, isOwner, reviewer }: { shop: Shop; vendor: 
       <Link href={`/dashboard/shops/${shop.id}/products`} className="p-button p-button-outlined gap-2">
         <span className="pi pi-box" aria-hidden /> Products
       </Link>
+      <Link href={`/dashboard/shops/${shop.id}/stock`} className="p-button p-button-outlined gap-2">
+        <span className="pi pi-chart-bar" aria-hidden /> Stock
+      </Link>
       {isOwner && (shop.status === "Draft" || shop.status === "Changes requested") && (
         <Button icon="pi pi-send" label="Send for review" loading={act.isPending && act.variables?.action === "submit"}
           onClick={plain("submit", `Send ${shop.name} for review?`, "You cannot edit it while it is being reviewed. We will tell you as soon as it is decided.", "Send for review")} />

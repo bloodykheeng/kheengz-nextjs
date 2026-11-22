@@ -67,6 +67,7 @@ export default function ProductsList() {
     { header: "Status", value: (p) => (p.blocked_at ? "Taken down" : p.status) },
     { header: "Price", value: (p) => priceRange(p) },
     { header: "Variants", value: (p) => p.variants_count ?? 0 },
+    { header: "Free to sell", value: (p) => ((p.tracked_variants_count ?? 0) === 0 ? "Not counted" : (p.stock_available ?? 0)) },
     { header: "Photos", value: (p) => p.photos_count ?? 0 },
     { header: "Updated", value: (p) => asDate(p.updated_at ?? null) },
   ];
@@ -90,6 +91,11 @@ export default function ProductsList() {
       ),
     },
     { field: "price", header: "Price", body: (p: Product) => <span className="text-sm">{priceRange(p)}<span className="block text-xs text-(--text-muted)">{p.variants_count} variant{p.variants_count === 1 ? "" : "s"}</span></span> },
+    { field: "stock", header: "Stock", body: (p: Product) => (
+      (p.tracked_variants_count ?? 0) === 0
+        ? <span className="text-xs text-(--text-muted)">Not counted</span>
+        : <span className={`text-sm ${(p.stock_available ?? 0) <= 0 ? "font-semibold text-red-600" : ""}`}>{(p.stock_available ?? 0) <= 0 ? "None free" : `${p.stock_available} free`}</span>
+    ) },
     { field: "status", header: "Status", sortable: true, body: (p: Product) => <StatusTag status={p.blocked_at ? "Taken down" : p.status} raw /> },
     { field: "updated_at", header: "Updated", sortable: true, body: (p: Product) => <span className="text-xs text-(--text-muted)">{dateTime(p.updated_at)}</span> },
   ];
@@ -101,6 +107,7 @@ export default function ProductsList() {
         subtitle={<>Each is a draft until you put it on sale. <Link href={`/dashboard/shops/${id}`} className="font-medium text-(--brand-ink) hover:underline">Back to the shop</Link></>}
         actions={editable ? (
           <>
+            <Button outlined icon="pi pi-chart-bar" label="Stock" onClick={() => router.push(`/dashboard/shops/${id}/stock`)} />
             <Button outlined icon="pi pi-th-large" label="Sections" onClick={() => setManaging(true)} />
             <Button icon="pi pi-plus" label="Add product" onClick={() => router.push(`/dashboard/shops/${id}/products/new`)} />
           </>
