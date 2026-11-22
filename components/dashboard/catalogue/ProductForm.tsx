@@ -49,6 +49,8 @@ const schema = z.object({
     unit_id: z.string(),
     weight_grams: z.number().nullable(),
     is_active: z.boolean(),
+    track_stock: z.boolean(),
+    low_stock_at: z.number().nullable(),
     price_breaks: z.array(z.object({ min_quantity: z.number().nullable(), unit_price: z.number().nullable() })).max(LIMITS.priceBreaks),
   })).min(1).max(LIMITS.variants, `A product can have ${LIMITS.variants} variants. Split it into two products.`),
 }).superRefine((v, ctx) => {
@@ -96,6 +98,8 @@ export function productFormValues(product: Product | null, defaultUnitId = ""): 
     unit_id: v.unit_id,
     weight_grams: v.weight_grams,
     is_active: v.is_active,
+    track_stock: v.track_stock,
+    low_stock_at: v.low_stock_at,
     price_breaks: v.price_breaks.map((b) => ({ min_quantity: b.min_quantity, unit_price: b.unit_price })),
   }));
   return {
@@ -134,6 +138,8 @@ function payloadFrom(v: ProductFormValues, attributes: ProductAttribute[]): Prod
       compare_at_price: variant.compare_at_price,
       weight_grams: variant.weight_grams,
       is_active: variant.is_active,
+      track_stock: variant.track_stock,
+      low_stock_at: variant.track_stock ? variant.low_stock_at : null,
       price_breaks: variant.price_breaks.filter((b) => b.min_quantity !== null && b.unit_price !== null).map((b) => ({ min_quantity: b.min_quantity!, unit_price: b.unit_price! })),
     })),
   };
@@ -434,7 +440,27 @@ function VariantFields({ index: i, control, errors, unitOptions }: { index: numb
           )} />
         </Field>
       </div>
+      <StockSettings index={i} control={control} />
       <PriceBreaks index={i} control={control} error={e?.price_breaks?.message ?? e?.price_breaks?.root?.message} />
+    </div>
+  );
+}
+
+/** Whether its stock is counted, and from how many the shop is told it is running low (docs/stock.md). */
+function StockSettings({ index: i, control }: { index: number; control: Control<ProductFormValues> }) {
+  const tracked = useWatch({ control, name: `variants.${i}.track_stock` });
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Controller control={control} name={`variants.${i}.track_stock`} render={({ field }) => (
+        <SwitchRow label="Count stock" hint={field.value ? "Orders take from what you have; none left, none sold." : "Never runs out: made to order, or sold from what came in today."} checked={field.value} onChange={field.onChange} />
+      )} />
+      {tracked && (
+        <Field label="Tell me when it falls to" hint="Optional. We tell you in the bell, and again if it runs out.">
+          <Controller control={control} name={`variants.${i}.low_stock_at`} render={({ field }) => (
+            <InputNumber value={field.value ?? null} onValueChange={(ev) => field.onChange(ev.value ?? null)} min={0} maxFractionDigits={3} placeholder="5" className="w-full" inputClassName="w-full" />
+          )} />
+        </Field>
+      )}
     </div>
   );
 }

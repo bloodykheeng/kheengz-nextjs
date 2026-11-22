@@ -19,6 +19,8 @@ export interface VariantValues {
   unit_id: string;
   weight_grams: number | null;
   is_active: boolean;
+  track_stock: boolean;
+  low_stock_at: number | null;
   price_breaks: PriceBreakValues[];
 }
 
@@ -47,6 +49,8 @@ export function blankVariant(unitId: string, from?: Partial<VariantValues>): Var
     unit_id: from?.unit_id || unitId,
     weight_grams: from?.weight_grams ?? null,
     is_active: true,
+    track_stock: from?.track_stock ?? true,
+    low_stock_at: from?.low_stock_at ?? null,
     price_breaks: [],
   };
 }

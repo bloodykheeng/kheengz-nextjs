@@ -10,6 +10,10 @@ import type {
   ProductPayload,
   ProductPhoto,
   ShopSection,
+  ShopStockRow,
+  StockCard,
+  StockMovement,
+  ManualStockReason,
   Unit,
 } from "../types/catalogue";
 
@@ -233,5 +237,29 @@ export async function setPhotoVariant(productId: string, photoId: string, varian
 
 export async function deleteProductPhoto(productId: string, photoId: string) {
   const { data } = await axiosAPI.delete<Done>(`/v1/products/${productId}/photos/${photoId}`);
+  return data;
+}
+
+// ── Stock ─────────────────────────────────────────────────────────────────────
+
+export async function getStockCard(productId: string) {
+  const { data } = await axiosAPI.get<{ data: StockCard }>(`/v1/products/${productId}/stock`);
+  return data.data;
+}
+
+export type StockInput = { variant_id: string; location_id: string; reason: ManualStockReason; quantity: number; to_location_id?: string | null; note?: string | null };
+
+export async function recordStock(productId: string, payload: StockInput) {
+  const { data } = await axiosAPI.post<Saved<StockCard>>(`/v1/products/${productId}/stock`, payload);
+  return data;
+}
+
+export async function getStockMovements(productId: string, params: Params = {}) {
+  const { data } = await axiosAPI.get<Paginated<StockMovement>>(`/v1/products/${productId}/stock/movements`, { params: cleanParams(params) });
+  return data;
+}
+
+export async function getShopStock(shopId: string, params: Params = {}) {
+  const { data } = await axiosAPI.get<Paginated<ShopStockRow>>(`/v1/shops/${shopId}/stock`, { params: cleanParams(params) });
   return data;
 }

@@ -132,6 +132,10 @@ export interface ProductVariant {
   compare_at_price: number | null;
   weight_grams: number | null;
   is_active: boolean;
+  /** Off: stock is not counted (made to order, sold from what came in today). */
+  track_stock: boolean;
+  /** The shop is told when what is free falls to this. */
+  low_stock_at: number | null;
   price_breaks: PriceBreak[];
 }
 
@@ -170,6 +174,9 @@ export interface Product extends Audited {
   max_price?: number | null;
   variants_count?: number;
   photos_count?: number;
+  /** On hand minus held, over every location, of the variants whose stock is counted. */
+  stock_available?: number;
+  tracked_variants_count?: number;
   // Opened:
   section_ids?: string[];
   sections?: { id: string; name: string }[];
@@ -199,6 +206,72 @@ export interface ProductPayload {
     compare_at_price: number | null;
     weight_grams: number | null;
     is_active: boolean;
+    track_stock: boolean;
+    low_stock_at: number | null;
     price_breaks: PriceBreak[];
   }[];
+}
+
+// ── Stock (kheengz-laravel docs/stock.md) ─────────────────────────────────────
+
+/** App\Enums\StockMovementReason. */
+export type StockMovementReason = "Received" | "Counted" | "Damaged" | "Returned" | "Moved out" | "Moved in" | "Held" | "Released" | "Sold online";
+/** What a shop's people record by hand; "Moved" is written as Moved out and Moved in. */
+export type ManualStockReason = "Received" | "Counted" | "Damaged" | "Returned" | "Moved";
+
+export interface StockUnit {
+  name: string;
+  plural: string;
+  allows_decimals: boolean;
+}
+
+/** One product's stock: every variant against every location of its shop. */
+export interface StockCard {
+  locations: { id: string; name: string; is_default: boolean }[];
+  variants: {
+    id: string;
+    label: string;
+    sku: string | null;
+    is_active: boolean;
+    track_stock: boolean;
+    low_stock_at: number | null;
+    unit: StockUnit;
+    levels: { location_id: string; on_hand: number; reserved: number; available: number }[];
+    on_hand: number;
+    reserved: number;
+    available: number;
+  }[];
+}
+
+export interface StockMovement {
+  id: string;
+  variant_id: string;
+  variant_label?: string;
+  unit?: string | null;
+  location_id: string;
+  location?: string;
+  reason: StockMovementReason;
+  on_hand_change: number;
+  reserved_change: number;
+  on_hand_after: number;
+  reserved_after: number;
+  note: string | null;
+  source_type: string | null;
+  source_id: string | null;
+  created_at: string;
+  created_by?: UserReference | null;
+}
+
+/** A shop's counted variant on its stock page. */
+export interface ShopStockRow {
+  id: string;
+  product_id: string;
+  product_name: string;
+  label: string;
+  sku: string | null;
+  unit: StockUnit;
+  available: number;
+  on_hand: number;
+  low_stock_at: number | null;
+  is_active: boolean;
 }
