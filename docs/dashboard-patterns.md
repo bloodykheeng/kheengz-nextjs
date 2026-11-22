@@ -85,7 +85,15 @@ how forms ended up confirming, or sending, input that could not succeed. Copy
   Messages say what to do: "Enter the name.", "Choose the shop."
 - **Cross-field checks go in `.superRefine(fn, ALWAYS)`.** Without `ALWAYS`, zod skips the refinement
   while any field fails, so the first Save shows one problem and hides the next.
-- **Valid, then confirmed.** `handleSubmit(onValid)`, and only `onValid` calls `confirmAction`.
+- **Valid, then confirmed: "Confirm submission".** Every create or edit form asks before it sends:
+  `handleSubmit((v) => confirmSubmit("this category", () => save.mutateAsync(v)))`
+  ([ConfirmAction.tsx](../components/dashboard/ConfirmAction.tsx)). Yes saves with a spinner; a refusal closes
+  the confirm (`closeOnError`) so the API's errors show on the form's fields.
+- **Blank `defaultValues` on every form**, then `reset()` on open: without them inputs mount `undefined` (React's
+  uncontrolled-to-controlled warning) and a PrimeReact `InputNumber` filled later misses the value (Letshego's
+  plan form wiped a goal on save).
+- **A dirty form never closes silently:** the dialog's `onHide` and its Cancel are
+  `guardedClose(isDirty, save.isPending, onHide)`, which asks **Discard your changes?**.
 - **Server errors land on their fields**: `applyServerErrors(error, setError, fields)` maps Laravel's
   422 onto the form and returns the message to show above the buttons when nothing matched.
   Mutations set `meta: { skipGlobalError: true }` so the toast does not say it twice. Errors are
@@ -237,6 +245,72 @@ a page, not a dialog (section 4 applied to a page):
 - **Read-only for reviewers**: `readOnly` disables the fields (a `<fieldset disabled>`) and drops the
   save bar; the side cards stay live for the reviewer's own actions.
 
+## 18. Dialogs and crash screens
+
+- **Every dialog is [`@/components/common/Dialog`](../components/common/Dialog.tsx), never PrimeReact's
+  directly.** With Cache Components a page you leave stays mounted, hidden; leaving while a dialog faded out
+  left it half closed, deaf to Close, its mask blocking every click (Letshego). The wrapper remounts it when its
+  page is hidden.
+- **A page that crashes while drawing** shows [PageError](../components/common/PageError.tsx) inside the frame
+  (`app/dashboard/error.tsx`; `app/error.tsx` for sign-in and storefront; `app/global-error.tsx` when the root
+  layout fails): "This page could not be shown", Try again, Go to the start page, the error's reference. Never
+  Next's bare white "Application error".
+- **Page translators are off** (`<html translate="no">`, `<meta name="google" content="notranslate">`): a
+  translator rewrites text under React, which crashes it and can leave old figures on screen. A language, if ever
+  needed, is built in with `next-intl`. `<body>` keeps `suppressHydrationWarning` (extensions write there).
+- **Errors stay in the production console** (`removeConsole: { exclude: ["error"] }`), so a crash leaves a trace.
+
+## 19. Loading shapes, and never a blank page
+
+- **Every route has a `loading.tsx`** and **every `<Suspense>` a fallback**, in the shape of the page that is
+  coming, from [RecordSkeleton.tsx](../components/dashboard/RecordSkeleton.tsx): `ListPageSkeleton`,
+  `CardsPageSkeleton`, `ReportPageSkeleton` (with `padded={false}` inside a page), or the record's own
+  (`ShopRecordSkeleton`, `VendorRecordSkeleton`, `ProductRecordSkeleton`). A white page reads as a crash.
+- **Components load in their own shape** too, never one grey block: a card shows its rows (`Bar`), a history its
+  timeline (`TimelineSkeleton`), a record page the same record skeleton as its `loading.tsx`, so the two match.
+  Spinners are for saving and sending only. A new page adds its shape with it.
+- Each route folder has its own `loading.tsx` (no shared one reading `usePathname()`: under Cache Components that
+  read is URL data and would need its own boundary).
+
+## 20. Back to the list where it was left, and the same place on the page
+
+- **Every list remembers its address** (page, filters, search, sort) per tab as it changes (`useListParams` →
+  `rememberListUrl`, [lib/listReturn.ts](../lib/listReturn.ts)). The breadcrumb's list links and any record's back
+  link (`useListReturn("/dashboard/shops")`) return there: page 3 stays page 3. The sidebar opens a list fresh.
+- **Paging, sorting or filtering keeps the reader in place**: `useListParams` pushes with `{ scroll: false }`.
+- **A reload or Back / Forward returns to the same scroll place** ([useScrollMemory](../hooks/useScrollMemory.ts),
+  mounted in DashboardLayout on `<main>` in its own `<Suspense>`): saved per URL in sessionStorage, restored once
+  the page is tall enough, and the person scrolling wins. A link to a page starts at the top.
+- A breadcrumb step with no page of its own (`/dashboard/products`) shows as text, never a dead link.
+
+## 21. Lists: the rules held everywhere
+
+- **The standard table for every list**: server paging, search, one Filters dialog, Export, 3-state sort, state
+  in the URL. The Units screen is one (paged on the API with `page`; pickers still read the whole short list).
+- **Names in tables are plain text; the eye (View) opens the row**, before Edit. Rows with a page of their own
+  open it; rows without one open a details dialog (`RecordDetailsDialog`, with Edit in its footer).
+- **Create lives in the table's toolbar** (`createAction`, relabelled where the word matters: "Open a shop",
+  "Add product"), not in the page header; navigation buttons (Stock, Sections) stay in the header.
+- **Delete in bulk only**: tick rows, **Delete (n)** (`deleteSelectedAction`), all or none on the API (nothing
+  goes if one is in use, and the answer names it). No per-row delete in a table. The category tree, which is
+  not a table, keeps its own row actions.
+- **Ticks belong to the rows on screen** ([useTicked](../hooks/useTicked.ts)): they clear when the page, search,
+  sort or filters change, and only rows still shown count, so a search never leaves "Delete (4)" over one row.
+- **No hidden default filter**: a list with no filter shows everything; any narrowing is a chip that can be seen
+  and cleared (Category requests shows every request, newest first, with Pending one filter away).
+
+## 22. Dates
+
+`dateTime()` ([lib/format.ts](../lib/format.ts)) writes a moment the house way, **`21/11/2026 9:05 AM`**: day
+first, 12-hour clock, in the business timezone (Africa/Kampala) so every viewer agrees on the day. The audit
+trail uses it too. Never `toLocaleString()` with the browser's defaults.
+
 ## Checking it
+
+Take the pictures and look at them before saying a screen is done (coding-notes
+`ai-agents/look-at-your-own-screens.md`): `SCREENS=1 npx playwright test e2e/admin/screens.spec.ts` saves the main
+screens at 1536x745 and 1920x1080, light and dark, to `test-results/screens/` (git-ignored). Add a screen to its
+list when you build one.
+
 
 The foundation's screens have browser checks in `e2e/`: [e2e-testing.md](e2e-testing.md).

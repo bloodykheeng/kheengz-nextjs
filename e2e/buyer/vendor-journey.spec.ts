@@ -28,6 +28,16 @@ async function signIn(page: Page, email: string, password: string) {
   await expect(page).toHaveURL(/\/dashboard$/);
 }
 
+/** Every form asks "Confirm submission" before it saves (components/dashboard/ConfirmAction.tsx). */
+async function confirmSave(page: Page) {
+  await page.getByRole("dialog", { name: "Confirm submission" }).getByRole("button", { name: "Yes, save" }).click();
+}
+
+/** Names in tables are plain text; the row's eye opens it (coding-notes navigation rule 6). */
+async function openRow(page: Page, text: string | RegExp) {
+  await page.getByRole("row").filter({ hasText: text }).first().getByRole("button", { name: "View details" }).click();
+}
+
 async function uploadPaper(page: Page, label: string) {
   const row = page.getByRole("listitem").filter({ hasText: label });
   const [chooser] = await Promise.all([page.waitForEvent("filechooser"), row.getByRole("button", { name: "Upload" }).click()]);
@@ -62,6 +72,7 @@ test("a seller applies, sets up a shop and sends it for review", async ({ page }
   const dialog = page.getByRole("dialog", { name: "Add a payout destination" });
   await dialog.getByLabel("Mobile Money number").fill(SELLER.phone);
   await dialog.getByRole("button", { name: "Save" }).click();
+  await confirmSave(page);
   await expect(page.getByText(/MTN Mobile Money/).first()).toBeVisible();
   await expect(page.getByText("Verified").first()).toBeVisible();
 
@@ -74,6 +85,7 @@ test("a seller applies, sets up a shop and sends it for review", async ({ page }
   await shopDialog.getByLabel(/^Address/).fill("Plot 12, Kikuubo Lane");
   await shopDialog.getByLabel("Area").fill("Kikuubo");
   await shopDialog.getByRole("button", { name: "Save as draft" }).click();
+  await confirmSave(page);
 
   await expect(page).toHaveURL(/\/dashboard\/shops\/[0-9a-z]{26}$/);
   await expect(page.getByRole("heading", { name: new RegExp(SHOP.name) })).toBeVisible();
@@ -92,7 +104,7 @@ test("the Admin approves the vendor, then the shop, and the shop opens", async (
   await signIn(page, ADMIN_EMAIL, PASSWORD);
 
   await page.goto(`/dashboard/vendors?search=${encodeURIComponent(SELLER.name)}&status=Pending`);
-  await page.getByRole("link", { name: new RegExp(SELLER.name) }).first().click();
+  await openRow(page, new RegExp(SELLER.name));
   await page.getByRole("button", { name: "Approve" }).first().click();
   await page.getByRole("dialog").getByRole("button", { name: "Approve" }).click();
   await expect(page.getByText("Approved").first()).toBeVisible();
@@ -107,7 +119,7 @@ test("the Admin approves the vendor, then the shop, and the shop opens", async (
 test("the seller lists a product with options, asks for a category, and puts it on sale", async ({ page }) => {
   await signIn(page, SELLER.email, "Basins2026");
   await page.goto("/dashboard/shops");
-  await page.getByRole("link", { name: new RegExp(SHOP.name) }).first().click();
+  await openRow(page, new RegExp(SHOP.name));
   await page.getByRole("link", { name: "Products" }).click();
   await expect(page.getByText("No products yet. Add your first one.")).toBeVisible();
 
@@ -124,6 +136,7 @@ test("the seller lists a product with options, asks for a category, and puts it 
   const ask = page.getByRole("dialog", { name: "Ask for a category" });
   await ask.getByLabel(/^Name/).fill(REQUESTED);
   await ask.getByRole("button", { name: "Ask" }).click();
+  await confirmSave(page);
   await expect(page.getByText(/We will tell you when/)).toBeVisible();
 
   await page.getByRole("button", { name: "Add options" }).click();
@@ -135,6 +148,7 @@ test("the seller lists a product with options, asks for a category, and puts it 
   await page.getByLabel("One price for all variants").pressSequentially("6000");
   await page.getByRole("button", { name: "Apply" }).click();
   await page.getByRole("button", { name: "Save as draft" }).click();
+  await confirmSave(page);
 
   await expect(page).toHaveURL(/\/dashboard\/products\/[0-9a-z]{26}$/);
   await expect(page.getByRole("heading", { name: new RegExp(PRODUCT) })).toBeVisible();
@@ -157,6 +171,7 @@ test("the seller lists a product with options, asks for a category, and puts it 
   await page.locator(".p-dropdown-item").filter({ hasText: "Red" }).click();
   await record.getByLabel("Quantity").pressSequentially("10");
   await record.getByRole("button", { name: "Save" }).click();
+  await confirmSave(page);
   await expect(page.getByText("10 pieces")).toBeVisible();
 
   await page.getByRole("link", { name: "All products" }).click();
@@ -174,12 +189,13 @@ test("the Admin answers the request and takes a product down", async ({ page }) 
   const row = page.getByRole("row").filter({ hasText: REQUESTED });
   await row.getByRole("button", { name: "Add it" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Add and tell the shop" }).click();
+  await confirmSave(page);
   await expect(page.getByText("Added. We told the shop.")).toBeVisible();
 
   await page.goto("/dashboard/shops");
-  await page.getByRole("link", { name: new RegExp(SHOP.name) }).first().click();
+  await openRow(page, new RegExp(SHOP.name));
   await page.getByRole("link", { name: "Products" }).click();
-  await page.getByRole("link", { name: new RegExp(PRODUCT) }).click();
+  await openRow(page, new RegExp(PRODUCT));
   await page.getByRole("button", { name: "Take down" }).click();
   await page.getByRole("dialog").getByLabel(/^Reason/).fill("The photo does not show the product.");
   await page.getByRole("dialog").getByRole("button", { name: "Take down" }).click();

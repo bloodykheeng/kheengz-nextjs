@@ -56,6 +56,11 @@ Accounts default to the seeded Admin (`admin@kheengz.com` / `Kheengz@2026`); ove
   placeholder, then `getByRole("option")`. A label with a required asterisk is matched by a pattern
   (`/^Address/`).
 - A flow that needs an emailed code reads it with `verificationCodeFor(email)`.
+- **Every save asks "Confirm submission"**: click Save, then `confirmSave(page)` (the dialog's **Yes, save**).
+- **Names in tables are not links**: open a row with its eye, `openRow(page, text)` (the row's **View details**
+  button; row buttons are named by their tooltip).
+- **The screenshot runner** (`e2e/admin/screens.spec.ts`) is opt-in: `SCREENS=1 npx playwright test
+  e2e/admin/screens.spec.ts` saves the main screens at both desk sizes, light and dark, for looking at.
 - A PrimeReact `InputNumber` reports its value on blur: type into it with `pressSequentially`, not
   `fill`, which sets the box without the keystrokes the component listens to.
 - Each Phase 1 module adds its specs here and a row to the table above.
