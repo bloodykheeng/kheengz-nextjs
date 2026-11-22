@@ -7,7 +7,8 @@ import { solidPng } from "../helpers/png";
  * confirm the email code, upload both ID sides, add a Mobile Money number in their own name, open a
  * shop, choose where it is paid and send it for review. Then the Admin approves the vendor and the
  * shop, and the shop is Active. The seller lists a product with options and a photo and puts it on
- * sale, asking for a missing category on the way; the Admin adds the category and takes the product down. The throwaway e2e-… account and its vendor go at teardown.
+ * sale, asking for a missing category on the way, and receives stock; the Admin adds the category and
+ * takes the product down. The throwaway e2e-… account and its vendor go at teardown.
  */
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@kheengz.com";
 const PASSWORD = process.env.E2E_PASSWORD ?? "Kheengz@2026";
@@ -148,6 +149,22 @@ test("the seller lists a product with options, asks for a category, and puts it 
 
   await page.getByRole("button", { name: "Put on sale" }).click();
   await expect(page.getByText("On sale: buyers can find it.")).toBeVisible();
+
+  // Stock: ten red basins come in at the shop; the blue ones have none.
+  await page.getByRole("button", { name: "Record", exact: true }).click();
+  const record = page.getByRole("dialog", { name: "Record stock" });
+  await record.locator(".p-dropdown").first().click();
+  await page.locator(".p-dropdown-item").filter({ hasText: "Red" }).click();
+  await record.getByLabel("Quantity").pressSequentially("10");
+  await record.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("10 pieces")).toBeVisible();
+
+  await page.getByRole("link", { name: "All products" }).click();
+  await expect(page.getByText("10 free")).toBeVisible();
+  await page.getByRole("button", { name: "Stock" }).click();
+  await page.getByText("None free", { exact: true }).click();
+  await expect(page.getByRole("row").filter({ hasText: "Blue" })).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: "Red" })).toHaveCount(0);
 });
 
 test("the Admin answers the request and takes a product down", async ({ page }) => {
